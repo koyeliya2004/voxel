@@ -244,6 +244,13 @@ const App: React.FC = () => {
         const htmlResponse = await fetch(example.html);
         if (htmlResponse.ok) {
             const rawText = await htmlResponse.text();
+            
+            // Safety check: If Vite returns index.html (fallback) instead of the actual file, 
+            // it will contain the 'root' div. We don't want to render the app inside itself.
+            if (rawText.includes('<div id="root">')) {
+                throw new Error("Example file not found (server returned fallback HTML)");
+            }
+
             // Extract, clean, and zoom
             htmlText = zoomCamera(hideBodyText(extractHtmlFromText(rawText)));
         } else {
