@@ -12,7 +12,10 @@ let aiClient: GoogleGenAI | null = null;
 
 const getAIClient = () => {
   if (!aiClient) {
-    const apiKey = process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY_ || process.env.API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY || 
+                   process.env.GEMINI_API_KEY_ || 
+                   process.env.API_KEY || 
+                   import.meta.env.VITE_GEMINI_API_KEY;
     if (!apiKey) {
       throw new Error("Gemini API key not found. Please set GEMINI_API_KEY in the project settings.");
     }
