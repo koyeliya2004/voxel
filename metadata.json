@@ -1,0 +1,6 @@
+{
+  "name": "Image to Voxel Art",
+  "description": "Create beautiful voxel art scenes inspired by any image using Gemini AI.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
