@@ -4,135 +4,104 @@
 */
 
 
-import { GoogleGenAI, Modality } from "@google/genai";
 import { extractHtmlFromText } from "../utils/html";
 
-// Initialize Gemini Client Lazily
-let aiClient: GoogleGenAI | null = null;
-
-const getAIClient = () => {
-  if (!aiClient) {
-    const apiKey = process.env.GEMINI_API_KEY || 
-                   process.env.GEMINI_API_KEY_ || 
-                   process.env.API_KEY || 
-                   import.meta.env.VITE_GEMINI_API_KEY;
-    if (!apiKey) {
-      throw new Error("Gemini API key not found. Please set GEMINI_API_KEY in the project settings.");
-    }
-    aiClient = new GoogleGenAI({ apiKey });
-  }
-  return aiClient;
-};
-
 export const IMAGE_SYSTEM_PROMPT = "Generate an isolated object/scene on a simple background.";
-export const VOXEL_PROMPT = "I have provided an image. Code a beautiful voxel art scene inspired by this image. Write threejs code as a single-page.";
+export const VOXEL_PROMPT = "I have provided an image. Code a beautiful voxel art scene inspired by this image. Write threejs code as a single-page with a dark background. Make it look like a floating island to ensure transparency doesn't show background artifacts.";
 
 export const generateImage = async (prompt: string, aspectRatio: string = '1:1', optimize: boolean = true): Promise<string> => {
-  const ai = getAIClient();
-  try {
-    let finalPrompt = prompt;
+    const finalPrompt = optimize ? `${IMAGE_SYSTEM_PROMPT}\n\nSubject: ${prompt}` : prompt;
 
-    // Apply the shortened optimization prompt if enabled
-    if (optimize) {
-      finalPrompt = `${IMAGE_SYSTEM_PROMPT}\n\nSubject: ${prompt}`;
+    // Try Puter.js first (Free, No Key required on client)
+    if (typeof (window as any).puter !== 'undefined') {
+        try {
+            console.log("Generating image with Puter.js...");
+            const imageElement = await (window as any).puter.ai.txt2img(finalPrompt, { 
+                model: "black-forest-labs/flux-schnell" 
+            });
+            if (imageElement && imageElement.src) {
+                return imageElement.src;
+            }
+        } catch (puterError) {
+            console.warn("Puter.js image generation failed:", puterError);
+        }
     }
 
-    // Note: gemini-2.5-flash-image now supports multiple aspect ratios.
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-image',
-      contents: {
-        parts: [
-          {
-            text: finalPrompt,
-          },
-        ],
-      },
-      config: {
-        responseModalities: [
-            'IMAGE',
-        ],
-        imageConfig: {
-          aspectRatio: aspectRatio,
-        },
-      },
-    });
+    try {
+        const response = await fetch("/api/generate-image", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                prompt: finalPrompt,
+                size: aspectRatio === '1:1' ? "1024x1024" : "1024x768"
+            })
+        });
 
-    const part = response.candidates?.[0]?.content?.parts?.[0];
-    if (part && part.inlineData) {
-        const base64ImageBytes = part.inlineData.data;
-        const mimeType = part.inlineData.mimeType || 'image/png';
-        return `data:${mimeType};base64,${base64ImageBytes}`;
-    } else {
-      throw new Error("No image generated.");
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err?.error?.message || "Image Generation Failed via Server Proxy");
+        }
+
+        const data = await response.json();
+        const url = data.data?.[0]?.url || data.choices?.[0]?.url;
+        
+        if (!url) throw new Error("No image URL returned from proxy");
+        return url;
+    } catch (error) {
+        console.error("Image generation failed:", error);
+        throw error;
     }
-  } catch (error) {
-    console.error("Image generation failed:", error);
-    throw error;
-  }
 };
 
 export const generateVoxelScene = async (
-  imageBase64: string, 
-  onThoughtUpdate?: (thought: string) => void
+    imageBase64: string, 
+    onThoughtUpdate?: (thought: string) => void
 ): Promise<string> => {
-  const ai = getAIClient();
-  // Extract the base64 data part if it includes the prefix
-  const base64Data = imageBase64.split(',')[1] || imageBase64;
-  
-  // Extract MIME type from the data URL if present, otherwise default to jpeg
-  const mimeMatch = imageBase64.match(/^data:(.*?);base64,/);
-  const mimeType = mimeMatch ? mimeMatch[1] : 'image/jpeg';
-
-  let fullHtml = "";
-
-  try {
-    // Using gemini-3-pro-preview for complex code generation with thinking
-    const response = await ai.models.generateContentStream({
-      model: 'gemini-3-pro-preview',
-      contents: {
-        parts: [
-          {
-            inlineData: {
-              mimeType: mimeType,
-              data: base64Data
-            }
-          },
-          {
-            text: VOXEL_PROMPT
-          }
-        ]
-      },
-      config: {
-        thinkingConfig: {
-          includeThoughts: true,
-        },
-      },
-    });
-
-    for await (const chunk of response) {
-      const candidates = chunk.candidates;
-      if (candidates && candidates[0] && candidates[0].content && candidates[0].content.parts) {
-        for (const part of candidates[0].content.parts) {
-          // Cast to any to access 'thought' property if not in current type definition
-          const p = part as any;
-          
-          if (p.thought) {
-            if (onThoughtUpdate && p.text) {
-              onThoughtUpdate(p.text);
-            }
-          } else {
-            if (p.text) {
-              fullHtml += p.text;
-            }
-          }
+    if (onThoughtUpdate) onThoughtUpdate("Requesting analysis from secure backend (Claude 3.5 Sonnet)...");
+    
+    try {
+        const response = await fetch("/api/generate-voxel", { 
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                imageBase64,
+                prompt: VOXEL_PROMPT
+            })
+        });
+        
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err?.error?.message || "Voxel Generation Failed via Server Proxy");
         }
-      }
+
+        const data = await response.json();
+        const text = data.choices?.[0]?.message?.content || "";
+        
+        if (!text) throw new Error("No response from AI model");
+        
+        return extractHtmlFromText(text);
+    } catch (error) {
+        console.error("Voxel failed:", error);
+        throw error;
     }
+};
 
-    return extractHtmlFromText(fullHtml);
+export const generateVoxelSegmind = async (imageBase64: string): Promise<any> => {
+    try {
+        const response = await fetch("/api/generate-voxel-segmind", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ imageBase64 })
+        });
 
-  } catch (error) {
-    console.error("Voxel scene generation failed:", error);
-    throw error;
-  }
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err?.details || err?.error || "Segmind Workflow Failed");
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error("Segmind workflow failed:", error);
+        throw error;
+    }
 };

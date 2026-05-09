@@ -5,7 +5,7 @@
 
 
 import React, { useState, useRef, useEffect } from 'react';
-import { generateImage, generateVoxelScene, IMAGE_SYSTEM_PROMPT, VOXEL_PROMPT } from './services/gemini';
+import { generateImage, generateVoxelScene, generateVoxelSegmind, IMAGE_SYSTEM_PROMPT, VOXEL_PROMPT } from './services/gemini';
 import { extractHtmlFromText, hideBodyText, zoomCamera } from './utils/html';
 
 type AppStatus = 'idle' | 'generating_image' | 'generating_voxels' | 'error';
@@ -37,9 +37,9 @@ interface Example {
 }
 
 const EXAMPLES: Example[] = [
-  { img: 'https://www.gstatic.com/aistudio/starter-apps/image_to_voxel/example1.png', html: '/examples/example1.html' },
-  { img: 'https://www.gstatic.com/aistudio/starter-apps/image_to_voxel/example2.png', html: '/examples/example2.html' },
-  { img: 'https://www.gstatic.com/aistudio/starter-apps/image_to_voxel/example3.png', html: '/examples/example3.html' },
+  { img: 'https://www.gstatic.com/aistudio/starter-apps/image_to_voxel/example1.png', html: 'examples/example1.html' },
+  { img: 'https://www.gstatic.com/aistudio/starter-apps/image_to_voxel/example2.png', html: 'examples/example2.html' },
+  { img: 'https://www.gstatic.com/aistudio/starter-apps/image_to_voxel/example3.png', html: 'examples/example3.html' },
 ];
 
 const App: React.FC = () => {
@@ -116,7 +116,14 @@ const App: React.FC = () => {
 
   const handleError = (err: any) => {
     setStatus('error');
-    setErrorMsg(err.message || 'An unexpected error occurred.');
+    let message = err.message || 'An unexpected error occurred.';
+    
+    // Friendly handling for Rate Limits (429)
+    if (message.includes('429') || message.toLowerCase().includes('quota') || message.toLowerCase().includes('rate limit')) {
+      message = "API Rate Limit Exceeded. The free tier has limits. Please wait 60 seconds and try again, or use a different Gemini API key.";
+    }
+    
+    setErrorMsg(message);
     console.error(err);
   };
 
@@ -314,6 +321,200 @@ const App: React.FC = () => {
       }
   };
 
+  const handleDirectVoxelize = () => {
+    if (!imageData) return;
+    
+    setStatus('generating_voxels');
+    setThinkingText("Building voxel diorama in-browser...");
+    
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+        try {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            if (!ctx) throw new Error("Canvas context failed");
+
+            // Balanced resolution for quality across any image
+            const size = 64; 
+            canvas.width = size;
+            canvas.height = size;
+
+            ctx.drawImage(img, 0, 0, size, size);
+            const data = ctx.getImageData(0, 0, size, size).data;
+
+            // Simple average color for background gradient matching
+            let r_avg = 0, g_avg = 0, b_avg = 0, count_avg = 0;
+            for(let i=0; i<data.length; i+=16) {
+                r_avg += data[i]; g_avg += data[i+1]; b_avg += data[i+2]; count_avg++;
+            }
+            const bgColor = `rgb(${Math.round(r_avg/count_avg)}, ${Math.round(g_avg/count_avg)}, ${Math.round(b_avg/count_avg)})`;
+
+            const sceneCode = `
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { margin: 0; background: #87ceeb; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        #ui { position: absolute; bottom: 20px; left: 20px; color: white; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 8px; font-weight: bold; pointer-events: none; }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+    <div id="ui">ROBLOX-STYLE VOXEL RENDERER</div>
+    <script>
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x87ceeb);
+        scene.fog = new THREE.Fog(0x87ceeb, 50, 150);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.body.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 0.5;
+
+        const worldGroup = new THREE.Group();
+        scene.add(worldGroup);
+
+        // --- VOXEL DATA ---
+        const size = ${size};
+        const pixelData = [${data.join(',')}];
+        
+        let validVoxels = [];
+        for(let y = 0; y < size; y++) {
+            for(let x = 0; x < size; x++) {
+                const i = (y * size + x) * 4;
+                if(pixelData[i+3] > 120) {
+                    validVoxels.push({ x, y, i });
+                }
+            }
+        }
+
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+        const material = new THREE.MeshStandardMaterial({ roughness: 0.6, metalness: 0.1 });
+        const voxelMesh = new THREE.InstancedMesh(geometry, material, validVoxels.length);
+        voxelMesh.castShadow = true;
+        voxelMesh.receiveShadow = true;
+        worldGroup.add(voxelMesh);
+
+        // --- SUB-BASE (DIRT/ROCK) ---
+        // Create a blocky base under the image for that "Chunk" look
+        const dirtMaterial = new THREE.MeshStandardMaterial({ color: 0x5d4037 });
+        const baseMesh = new THREE.InstancedMesh(geometry, dirtMaterial, validVoxels.length);
+        baseMesh.receiveShadow = true;
+        worldGroup.add(baseMesh);
+
+        const dummy = new THREE.Object3D();
+        const color = new THREE.Color();
+        const voxels = [];
+
+        validVoxels.forEach((v, idx) => {
+            const r = pixelData[v.i] / 255;
+            const g = pixelData[v.i+1] / 255;
+            const b = pixelData[v.i+2] / 255;
+            
+            const lum = (r * 0.299 + g * 0.587 + b * 0.114);
+            const mid = size / 2;
+            const dist = Math.sqrt(Math.pow(v.x-mid, 2) + Math.pow(v.y-mid, 2));
+            
+            // Height logic: Objects in center are taller, brighter colors are taller
+            const h = Math.max(1, (1 - dist/mid) * 10 * lum + 2);
+            
+            voxels.push({
+                idx,
+                x: v.x - mid,
+                z: v.y - mid,
+                targetH: h,
+                currH: 0.1,
+                color: [r, g, b],
+                delay: dist * 0.05
+            });
+
+            color.setRGB(r, g, b);
+            voxelMesh.setColorAt(idx, color);
+        });
+
+        // --- LIGHTING ---
+        const ambient = new THREE.AmbientLight(0xffffff, 0.7);
+        scene.add(ambient);
+        
+        const sun = new THREE.DirectionalLight(0xffffff, 1.2);
+        sun.position.set(20, 40, 20);
+        sun.castShadow = true;
+        sun.shadow.mapSize.width = 1024;
+        sun.shadow.mapSize.height = 1024;
+        scene.add(sun);
+
+        camera.position.set(50, 40, 50);
+        camera.lookAt(0, 0, 0);
+
+        const clock = new THREE.Clock();
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = clock.getElapsedTime();
+            
+            // Subtle floating motion
+            worldGroup.position.y = Math.sin(time) * 1.5;
+            worldGroup.rotation.y = Math.sin(time * 0.2) * 0.05;
+
+            voxels.forEach(v => {
+                if(time > v.delay) {
+                    // Elastic growth animation
+                    const diff = v.targetH - v.currH;
+                    v.currH += diff * 0.1;
+                    
+                    // Update main voxel
+                    dummy.position.set(v.x, v.currH / 2, v.z);
+                    dummy.scale.set(0.95, v.currH, 0.95);
+                    dummy.updateMatrix();
+                    voxelMesh.setMatrixAt(v.idx, dummy.matrix);
+
+                    // Update dirt base underneath
+                    dummy.position.set(v.x, -1, v.z); 
+                    dummy.scale.set(0.95, 2, 0.95);
+                    dummy.updateMatrix();
+                    baseMesh.setMatrixAt(v.idx, dummy.matrix);
+                }
+            });
+            
+            voxelMesh.instanceMatrix.needsUpdate = true;
+            baseMesh.instanceMatrix.needsUpdate = true;
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>`;
+
+            setVoxelCode(sceneCode);
+            setViewMode('voxel');
+            setStatus('idle');
+            setThinkingText(null);
+        } catch (err: any) {
+            handleError(err);
+        }
+    };
+    img.onerror = () => handleError(new Error("Failed to load image for processing"));
+    img.src = imageData;
+  };
+
   const handleVoxelize = async () => {
     if (!imageData) return;
     setStatus('generating_voxels');
@@ -351,6 +552,44 @@ const App: React.FC = () => {
       setThinkingText(null);
     } catch (err) {
       handleError(err);
+    }
+  };
+
+  const handleSegmindStylize = async () => {
+    if (!imageData) return;
+    
+    setStatus('generating_image');
+    setErrorMsg('');
+    setThinkingText("Stylizing image via Segmind Workflow (Polling)...");
+
+    try {
+        const result = await generateVoxelSegmind(imageData);
+        
+        // Segmind v4 workflows typically return an image URL in output[0] or similar
+        const stylizedImageUrl = Array.isArray(result.output) ? result.output[0] : (result.output?.image || result.output?.url || result.output);
+        
+        if (stylizedImageUrl && typeof stylizedImageUrl === 'string') {
+            setImageData(stylizedImageUrl);
+            if (userContent) {
+                setUserContent({
+                    ...userContent,
+                    image: stylizedImageUrl
+                });
+            }
+            setStatus('idle');
+            setThinkingText(null);
+        } else {
+            const errorMsg = result.error || result.details || "No image URL returned from Segmind";
+            throw new Error(errorMsg);
+        }
+    } catch (err: any) {
+        console.error("Segmind Auto-Voxel failed:", err);
+        let msg = err.message || "Segmind Stylization Failed";
+        if (msg.includes("Unauthorized") || msg.includes("API key")) {
+            msg = "Segmind API Key Error: Please go to 'Settings' -> 'Secrets' and add a valid SEGMIND_API_KEY.";
+        }
+        setErrorMsg(msg);
+        setStatus('error');
     }
   };
 
@@ -407,7 +646,21 @@ const App: React.FC = () => {
         {/* Header */}
         <div className="text-center border-b-2 border-black pb-6">
           <h1 className="text-4xl sm:text-5xl font-black leading-[0.9] tracking-tight">IMAGE TO VOXEL ART</h1>
-          <p className="mt-2 text-lg text-gray-600 font-semibold">Create voxel art scenes inspired by any image, with Gemini 3.</p>
+          <p className="mt-2 text-lg text-gray-600 font-semibold">Transform images via Claude 3.5 Sonnet or direct pixel mapping.</p>
+          
+          {/* API Information & Quota Help */}
+          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 text-left text-xs space-y-2">
+            <p className="font-bold text-blue-800 uppercase flex items-center gap-1">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              Smart & Direct Workflows
+            </p>
+            <p className="text-blue-700 leading-tight">
+              <strong>Direct Voxel (Code):</strong> Instantly maps pixels to 3D boxes in your browser—no API key required.
+            </p>
+            <p className="text-blue-600">
+              <strong>Unlimited & Private:</strong> Use the "Direct Voxel" button for zero-latency 3D extrusions.
+            </p>
+          </div>
         </div>
 
         {/* Example Tiles & User Tile */}
@@ -528,7 +781,7 @@ const App: React.FC = () => {
             <div className="flex flex-col md:flex-row gap-4 items-end">
                 <div className="flex-grow w-full">
                 <label htmlFor="prompt" className="block text-sm font-bold mb-2 uppercase">
-                    Generate with Gemini 2.5 Flash Image
+                    Generate with Puter.js (Flux)
                 </label>
                 <input
                     id="prompt"
@@ -613,8 +866,8 @@ const App: React.FC = () => {
                     {/* Model Status */}
                     <div className="w-full max-w-3xl mb-10 text-xl font-bold tracking-tight">
                         {status === 'generating_image' 
-                            ? 'Generating three.js scene with Gemini 2.5 Flash Image' 
-                            : 'Generating three.js scene with Gemini 3 Pro'}
+                            ? 'Generating image with Puter.js (Flux Schnell)' 
+                            : 'Generating three.js scene with Claude 3.5 Sonnet'}
                     </div>
 
                     {/* Prompt Display */}
@@ -694,16 +947,38 @@ const App: React.FC = () => {
             )}
             
             {imageData && (
+                <>
+                <button
+                type="button"
+                onClick={handleDirectVoxelize}
+                disabled={isLoading}
+                className="px-6 py-4 bg-green-600 text-white border-2 border-black font-bold uppercase disabled:opacity-50 transition-all duration-200 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-green-700 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center gap-2"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                    Direct Voxel (Code)
+                </button>
+
+                <button
+                type="button"
+                onClick={handleSegmindStylize}
+                disabled={isLoading}
+                className="px-6 py-4 bg-blue-600 text-white border-2 border-black font-bold uppercase disabled:opacity-50 transition-all duration-200 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-blue-700 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center gap-2"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>
+                    Segmind Auto-Voxel
+                </button>
+
                 <button
                 type="button"
                 onClick={handleVoxelize}
                 disabled={isLoading}
-                title="Generate 3D voxel art from this image using Gemini 3 Pro"
+                title="Generate 3D voxel art from this image using Claude 3.5 Sonnet"
                 aria-label="Generate voxel art"
                 className="flex-1 min-w-[160px] py-4 bg-black text-white border-2 border-black font-bold uppercase disabled:opacity-50 transition-all duration-200 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)] hover:bg-gray-900 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,0.5)] active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.5)]"
                 >
                 {voxelCode ? 'Regenerate voxels' : 'Generate voxels'}
                 </button>
+                </>
             )}
             </div>
             )}

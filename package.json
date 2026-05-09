@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "tsx server.ts",
     "build": "vite build",
     "preview": "vite preview",
     "start": "serve -s dist",
@@ -12,10 +12,12 @@
   },
   "dependencies": {
     "@google/genai": "^1.27.0",
+    "express": "^5.2.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "serve": "^14.2.6",
-    "three": "^0.170.0"
+    "three": "^0.170.0",
+    "tsx": "^4.21.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
