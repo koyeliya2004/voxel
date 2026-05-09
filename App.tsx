@@ -4,6 +4,11 @@ import {
   Home as HomeIcon, 
   History as HistoryIcon, 
   Box, 
+  Play,
+  Settings,
+  Code2,
+  MonitorPlay,
+  Activity,
   ArrowLeft, 
   Download, 
   Plus, 
@@ -20,7 +25,6 @@ import {
 } from 'lucide-react';
 import { generateImage, IMAGE_SYSTEM_PROMPT } from './services/imageService';
 import { extractHtmlFromText, hideBodyText, zoomCamera } from './utils/html';
-import VoxelNexus from './VoxelNexus';
 
 type AppStatus = 'idle' | 'generating_image' | 'generating_voxels' | 'error';
 type View = 'home' | 'app' | 'history' | 'nexus';
@@ -78,6 +82,14 @@ const App: React.FC = () => {
   // UI States
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Nexus States
+  const [nexusPrompt, setNexusPrompt] = useState('');
+  const [nexusCode, setNexusCode] = useState('');
+  const [nexusIsLoading, setNexusIsLoading] = useState(false);
+  const [nexusError, setNexusError] = useState<string | null>(null);
+  const [nexusViewMode, setNexusViewMode] = useState<'render' | 'code'>('render');
+  const [nexusStatusText, setNexusStatusText] = useState('SYSTEM IDLE');
 
   // Persistence for history
   useEffect(() => {
@@ -353,9 +365,9 @@ const App: React.FC = () => {
           </button>
           <button 
             onClick={() => setView('nexus')}
-            className="px-10 py-5 bg-blue-600 text-white border-2 border-black font-black uppercase text-xl shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
+            className="px-10 py-5 bg-gradient-to-r from-cyan-400 to-blue-600 text-white border-2 border-black font-black uppercase text-xl shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all flex items-center gap-3"
           >
-            Voxel Nexus
+            Voxel Nexus <Box size={24} />
           </button>
         </div>
       </header>
@@ -420,6 +432,45 @@ const App: React.FC = () => {
                     <p className="text-[10px] font-black uppercase text-gray-400">Exports</p>
                 </div>
             </div>
+        </div>
+      </section>
+
+      <section className="border-t-4 border-black pt-12 space-y-12">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div className="space-y-2">
+                <h2 className="text-4xl font-black uppercase flex items-center gap-3">
+                <Box size={32} className="text-fuchsia-600" />
+                Nexus Protocol
+                </h2>
+                <p className="text-gray-400 font-bold uppercase text-xs tracking-widest">Text-to-Code Neural Engine</p>
+            </div>
+            <div className="px-4 py-2 bg-fuchsia-100 border-2 border-fuchsia-600 text-fuchsia-600 font-black uppercase text-[10px]">Experimental v3.0</div>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-8">
+            <div className="p-8 bg-black text-white border-2 border-black space-y-4 hover:shadow-[8px_8px_0px_0px_rgba(217,70,239,1)] transition-shadow">
+                <Zap className="text-cyan-400" size={32} />
+                <h3 className="font-black uppercase text-xl">Semantic Input</h3>
+                <p className="text-gray-400 text-sm leading-relaxed">Skip the image entirely. Describe your object in natural language and watch the matrix construct it from scratch.</p>
+            </div>
+            <div className="p-8 bg-white border-2 border-black space-y-4 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-shadow">
+                <Cpu className="text-fuchsia-600" size={32} />
+                <h3 className="font-black uppercase text-xl">Llama 70B Core</h3>
+                <p className="text-gray-600 text-sm leading-relaxed">Powered by Llama-3.3-70B via Groq LPUs for sub-second code generation of complex procedural geometries.</p>
+            </div>
+            <div className="p-8 bg-gray-50 border-2 border-black space-y-4 hover:shadow-[8px_8px_0px_0px_rgba(37,99,235,1)] transition-shadow">
+                <Code2 className="text-blue-600" size={32} />
+                <h3 className="font-black uppercase text-xl">Native WebGL</h3>
+                <p className="text-gray-600 text-sm leading-relaxed">Generates optimized Three.js boilerplate code that runs directly in any modern browser without heavy assets.</p>
+            </div>
+        </div>
+
+        <div className="bg-yellow-50 border-2 border-black p-6 flex items-start gap-4">
+            <Info className="shrink-0 text-yellow-600" />
+            <p className="text-sm font-medium text-yellow-900">
+                <span className="font-black uppercase mr-2 underline">Pro Tip:</span>
+                Voxel Nexus works best for structured entities like "Cyberpunk car", "Space Station", or "Medieval Castle". The more descriptive your prompt, the better the procedural algorithm becomes.
+            </p>
         </div>
       </section>
 
@@ -530,6 +581,12 @@ const App: React.FC = () => {
                 className="font-black uppercase text-xs px-4 py-2 border-2 border-black hover:bg-black hover:text-white transition-all flex items-center gap-2"
             >
                <HistoryIcon size={14} /> Vault
+            </button>
+            <button 
+                onClick={() => setView('nexus')} 
+                className="font-black uppercase text-xs px-4 py-2 border-2 border-blue-600 hover:bg-blue-600 hover:text-white transition-all flex items-center gap-2"
+            >
+               <Layers size={14} /> Nexus
             </button>
         </div>
       </header>
@@ -675,15 +732,324 @@ const App: React.FC = () => {
     </motion.div>
   );
 
-  const isNexusView = view === 'nexus';
+  const handleNexusGenerate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nexusPrompt.trim()) {
+      setNexusError("PARAMETER MISSING: Describe the target entity.");
+      return;
+    }
+
+    setNexusIsLoading(true);
+    setNexusError(null);
+    setNexusStatusText('INITIALIZING VOXEL MATRIX...');
+
+    const systemPrompt = `You are an elite 3D voxel generation AI. 
+You must output a complete HTML file. Use the exact boilerplate below, and ONLY modify the COLORS object and the buildEntity() function to create the requested object using createVoxel(x, y, z, colorHex).
+
+<!DOCTYPE html>
+<html>
+<head>
+    <style>body{margin:0;overflow:hidden;background:#050505;}canvas{display:block;}</style>
+    <script type="importmap">
+        { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
+    </script>
+</head>
+<body>
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x050505, 0.02);
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth/innerHeight, 0.1, 1000);
+        camera.position.set(30, 20, 30);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        document.body.appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.autoRotate = true; controls.autoRotateSpeed = 2.0;
+
+        scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+        dirLight.position.set(50, 100, 50); dirLight.castShadow = true;
+        scene.add(dirLight);
+        const backLight = new THREE.PointLight(0x00e5ff, 2, 100);
+        backLight.position.set(-20, 10, -20); scene.add(backLight);
+
+        const geometry = new THREE.BoxGeometry(1, 1, 1);
+        const materials = {};
+        function getMat(hex) { if(!materials[hex]){ materials[hex] = new THREE.MeshStandardMaterial({color:hex, roughness:0.7}); } return materials[hex]; }
+
+        const mainGroup = new THREE.Group();
+        scene.add(mainGroup);
+
+        function createVoxel(x, y, z, hex) {
+            const mesh = new THREE.Mesh(geometry, getMat(hex));
+            mesh.position.set(x, y, z);
+            mesh.castShadow = true; mesh.receiveShadow = true;
+            mainGroup.add(mesh);
+        }
+
+        // --- AI MODIFIES BELOW THIS LINE ---
+        const COLORS = {
+            main: 0xff0055, // Add colors needed for the prompt
+        };
+
+        function buildEntity() {
+            // BUILD VOXELS HERE BASED ON PROMPT. Use loops and procedural generation.
+            createVoxel(0,0,0, COLORS.main);
+        }
+        // --- AI MODIFIES ABOVE THIS LINE ---
+
+        buildEntity();
+
+        const clock = new THREE.Clock();
+        function animate() {
+            requestAnimationFrame(animate);
+            mainGroup.position.y = Math.sin(clock.getElapsedTime() * 2) * 1.5; // Floating effect
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+        
+        window.onresize = () => { camera.aspect = window.innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); };
+    </script>
+</body>
+</html>
+
+OUTPUT ONLY HTML. NO MARKDOWN. NO CHAT. NO EXPLANATIONS.`;
+
+    try {
+      const response = await fetch("/api/groq", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: `Generate procedural voxel code for: ${nexusPrompt}. Make it detailed and centered at 0,0,0.` }
+          ],
+          temperature: 0.5,
+          max_tokens: 6000
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || "API request failed");
+      }
+
+      const result = await response.json();
+      const rawContent = result.choices[0].message.content;
+      
+      // Robust HTML extraction
+      const extractHTML = (text: string) => {
+        const match = text.match(/<html[\s\S]*?<\/html>/i);
+        if (match) return match[0];
+        return text.replace(/```(html)?/gi, '').replace(/```/g, '').trim();
+      };
+
+      const extractedHTML = extractHTML(rawContent);
+      
+      setNexusCode(extractedHTML);
+      setNexusStatusText('RENDER SEQUENCE COMPLETE');
+      setNexusViewMode('render');
+      
+      // Add to main app history for persistence
+      addToHistory('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', extractedHTML, `Nexus: ${nexusPrompt}`);
+      
+    } catch (err: any) {
+      setNexusError(err.message || "An error occurred.");
+      setNexusStatusText('ERROR IN GENERATION');
+    } finally {
+      setNexusIsLoading(false);
+    }
+  };
+
+  const renderNexus = () => (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 bg-[#030305] text-slate-300 font-sans flex flex-col selection:bg-cyan-500/30 overflow-hidden"
+    >
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-cyan-900/20 via-[#030305] to-[#030305] pointer-events-none z-0"></div>
+      
+      <header className="relative z-10 h-16 border-b border-white/5 bg-white/[0.02] backdrop-blur-md flex items-center justify-between px-6 shrink-0">
+        <div className="flex items-center gap-4">
+          <button onClick={() => setView('home')} className="p-2 hover:bg-white/5 rounded-lg transition-colors text-white">
+            <ArrowLeft size={20} />
+          </button>
+          <div className="flex items-center gap-3">
+            <div className="relative flex items-center justify-center size-10 rounded-xl bg-gradient-to-b from-cyan-400 to-blue-600 shadow-[0_0_20px_rgba(34,211,238,0.3)]">
+              <Box className="text-white size-5 absolute" />
+              <div className="absolute inset-0 border border-white/20 rounded-xl"></div>
+            </div>
+            <div>
+              <h1 className="font-black text-xl tracking-tighter text-white uppercase flex items-center gap-2">
+                Voxel<span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Nexus</span>
+              </h1>
+              <p className="text-[9px] font-mono text-cyan-500/70 tracking-[0.3em] uppercase">Procedural Synthesis Engine v3.0</p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-6">
+          <div className="hidden lg:flex items-center gap-4 text-[10px] font-mono text-slate-500 uppercase tracking-widest bg-black/40 px-4 py-2 rounded-lg border border-white/5">
+            <span className="flex items-center gap-2"><Cpu size={12} className="text-cyan-500"/> WebGL 2.0 Active</span>
+            <div className="w-px h-3 bg-white/10"></div>
+            <span className="flex items-center gap-2"><Activity size={12} className="text-fuchsia-500"/> Llama 70B Core</span>
+          </div>
+        </div>
+      </header>
+
+      <main className="flex-1 flex overflow-hidden relative z-10">
+        <div className="w-full md:w-[420px] bg-white/[0.01] border-r border-white/5 flex flex-col shrink-0 relative">
+          <div className="absolute top-0 right-0 w-px h-full bg-gradient-to-b from-transparent via-cyan-500/20 to-transparent"></div>
+          
+          <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-8 custom-scrollbar">
+            <form onSubmit={handleNexusGenerate} className="flex flex-col gap-5 flex-1">
+              <div className="flex-1 flex flex-col">
+                <label className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-3">
+                  <Layers size={12} className="text-fuchsia-500"/> Synthesis Parameters
+                </label>
+                <textarea 
+                  value={nexusPrompt}
+                  onChange={(e) => setNexusPrompt(e.target.value)}
+                  placeholder="Enter semantic description...&#10;&#10;Examples:&#10;> Cyberpunk hover-car with neon trim&#10;> Blocky golden retriever puppy&#10;> Ancient stone golem with moss"
+                  className="w-full flex-1 min-h-[160px] p-4 bg-black/50 border border-white/10 rounded-xl focus:border-fuchsia-500/50 focus:ring-1 focus:ring-fuchsia-500/50 focus:outline-none text-sm font-mono resize-none transition-all text-fuchsia-100 placeholder:text-slate-700 leading-relaxed"
+                />
+              </div>
+
+              <button 
+                type="submit"
+                disabled={nexusIsLoading}
+                className={`group relative overflow-hidden flex items-center justify-center gap-3 w-full py-4 rounded-xl font-bold uppercase tracking-widest text-[11px] transition-all ${
+                  nexusIsLoading 
+                  ? 'bg-slate-900 text-slate-500 cursor-not-allowed border border-white/5' 
+                  : 'bg-white text-black hover:bg-cyan-50 hover:shadow-[0_0_30px_rgba(34,211,238,0.3)] active:scale-[0.98]'
+                }`}
+              >
+                {nexusIsLoading ? (
+                  <>
+                    <Activity size={16} className="animate-pulse" />
+                    <span>Processing Matrix...</span>
+                  </>
+                ) : (
+                  <>
+                    <Zap size={16} className="text-cyan-500 group-hover:scale-110 transition-transform" fill="currentColor"/>
+                    <span>Initiate Render</span>
+                  </>
+                )}
+              </button>
+            </form>
+
+            <div className="mt-auto space-y-3">
+              {nexusError && (
+                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 font-mono text-[10px] uppercase leading-relaxed flex gap-2 items-start">
+                  <span className="text-red-500">!</span> {nexusError}
+                </div>
+              )}
+              
+              <div className="flex items-center justify-between p-3 bg-black/40 border border-white/5 rounded-lg">
+                <span className="text-[9px] font-mono text-slate-500 uppercase tracking-widest">System Status</span>
+                <span className={`text-[9px] font-mono uppercase tracking-widest ${nexusIsLoading ? 'text-cyan-400 animate-pulse' : 'text-slate-400'}`}>
+                  {nexusStatusText}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 flex flex-col relative bg-black/20 m-4 rounded-2xl border border-white/10 overflow-hidden shadow-2xl shadow-black">
+          <div className="absolute top-4 left-4 right-4 z-20 flex justify-between pointer-events-none">
+            <div className="flex gap-2 pointer-events-auto">
+              <button 
+                onClick={() => setNexusViewMode('render')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-mono uppercase tracking-widest backdrop-blur-md transition-all border ${
+                  nexusViewMode === 'render' 
+                  ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50 shadow-[0_0_15px_rgba(34,211,238,0.2)]' 
+                  : 'bg-black/50 text-slate-400 border-white/10 hover:bg-white/10'
+                }`}
+              >
+                <MonitorPlay size={14} /> Viewport
+              </button>
+              <button 
+                onClick={() => setNexusViewMode('code')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-mono uppercase tracking-widest backdrop-blur-md transition-all border ${
+                  nexusViewMode === 'code' 
+                  ? 'bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-500/50 shadow-[0_0_15px_rgba(217,70,239,0.2)]' 
+                  : 'bg-black/50 text-slate-400 border-white/10 hover:bg-white/10'
+                }`}
+              >
+                <Code2 size={14} /> Source
+              </button>
+            </div>
+
+            {nexusCode && (
+              <button 
+                onClick={() => setNexusCode('')}
+                className="pointer-events-auto flex items-center justify-center size-8 rounded-lg bg-black/50 border border-white/10 text-slate-400 hover:text-red-400 hover:border-red-500/50 transition-colors backdrop-blur-md"
+                title="Clear Scene"
+              >
+                <Trash2 size={14} />
+              </button>
+            )}
+          </div>
+
+          <div className="flex-1 relative w-full h-full bg-[#050505]">
+            {nexusCode ? (
+              nexusViewMode === 'render' ? (
+                <iframe 
+                  srcDoc={nexusCode}
+                  title="Voxel Viewport"
+                  className="w-full h-full border-none absolute inset-0"
+                  sandbox="allow-scripts allow-same-origin"
+                />
+              ) : (
+                <div className="absolute inset-0 p-6 pt-20 overflow-auto bg-[#0a0a0c]">
+                  <pre className="font-mono text-[11px] text-slate-300 leading-relaxed">
+                    <code dangerouslySetInnerHTML={{ __html: nexusCode.replace(/</g, '&lt;').replace(/>/g, '&gt;') }}></code>
+                  </pre>
+                </div>
+              )
+            ) : (
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                <div className="relative mb-6">
+                  <div className="absolute inset-0 bg-cyan-500/20 blur-3xl rounded-full"></div>
+                  <div className="size-24 rounded-2xl border-2 border-dashed border-white/10 flex items-center justify-center bg-white/[0.02] backdrop-blur-sm relative animate-[spin_20s_linear_infinite]">
+                    <Box size={40} strokeWidth={1} className="text-white/20" />
+                  </div>
+                </div>
+                <h3 className="font-mono text-xs uppercase tracking-[0.3em] text-white/50 mb-2">No Entity Loaded</h3>
+                <p className="font-mono text-[10px] text-white/30 max-w-xs leading-relaxed">Input parameters in the control matrix and initiate render to synthesize a voxel object.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
+      
+      <style dangerouslySetInnerHTML={{__html: `
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(34,211,238,0.5); }
+      `}} />
+    </motion.div>
+  );
 
   return (
-    <div className={`min-h-screen bg-white selection:bg-blue-100 selection:text-blue-900 flex flex-col overflow-x-hidden ${isNexusView ? 'w-screen px-0 items-stretch' : 'items-center px-4'}`}>
+    <div className="min-h-screen bg-white selection:bg-blue-100 selection:text-blue-900 flex flex-col items-center px-4 overflow-x-hidden">
       <AnimatePresence mode="wait">
         {view === 'home' && renderHome()}
         {view === 'app' && renderApp()}
         {view === 'history' && renderHistory()}
-        {view === 'nexus' && <VoxelNexus />}
+        {view === 'nexus' && renderNexus()}
       </AnimatePresence>
     </div>
   );
