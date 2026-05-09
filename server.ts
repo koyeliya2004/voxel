@@ -138,7 +138,7 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     // API 404 handler - prevents /api/* from falling through to the index.html
-    app.all('/api/*', (req, res) => {
+    app.all('/api/*all', (req, res) => {
       res.status(404).json({ error: `API route ${req.method} ${req.url} not found` });
     });
 
