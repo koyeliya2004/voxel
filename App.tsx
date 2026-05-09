@@ -5,10 +5,11 @@
 
 
 import React, { useState, useRef, useEffect } from 'react';
-import { generateImage, generateVoxelScene, generateVoxelSegmind, IMAGE_SYSTEM_PROMPT, VOXEL_PROMPT } from './services/gemini';
+import { generateImage, generateVoxelScene, IMAGE_SYSTEM_PROMPT, VOXEL_PROMPT } from './services/gemini';
+import { generateGroqVoxel } from './services/groq';
 import { extractHtmlFromText, hideBodyText, zoomCamera } from './utils/html';
 
-type AppStatus = 'idle' | 'generating_image' | 'generating_voxels' | 'error';
+type AppStatus = 'idle' | 'generating_image' | 'generating_voxels' | 'generating_groq' | 'error';
 
 // Available aspect ratios
 const ASPECT_RATIOS = ["1:1", "3:4", "4:3", "16:9", "9:16"];
@@ -160,6 +161,28 @@ const App: React.FC = () => {
       
       setStatus('idle');
       setShowGenerator(false); // Close generator on success
+    } catch (err) {
+      handleError(err);
+    }
+  };
+
+  const handleGroqGenerate = async () => {
+    if (!prompt.trim()) return;
+    
+    setStatus('generating_groq');
+    setErrorMsg('');
+    setThinkingText("Drafting 3D code via Groq (Llama 3)...");
+    setIsViewerVisible(true);
+    
+    try {
+      const codeRaw = await generateGroqVoxel(prompt);
+      const code = zoomCamera(hideBodyText(codeRaw));
+      setVoxelCode(code);
+      setImageData(null); // Groq is text-to-code here
+      setViewMode('voxel');
+      setStatus('idle');
+      setThinkingText(null);
+      setShowGenerator(false);
     } catch (err) {
       handleError(err);
     }
@@ -325,7 +348,7 @@ const App: React.FC = () => {
     if (!imageData) return;
     
     setStatus('generating_voxels');
-    setThinkingText("Building voxel diorama in-browser...");
+    setThinkingText("Building Roblox-style diorama...");
     
     const img = new Image();
     img.crossOrigin = "anonymous";
@@ -335,7 +358,6 @@ const App: React.FC = () => {
             const ctx = canvas.getContext('2d');
             if (!ctx) throw new Error("Canvas context failed");
 
-            // Balanced resolution for quality across any image
             const size = 64; 
             canvas.width = size;
             canvas.height = size;
@@ -343,30 +365,32 @@ const App: React.FC = () => {
             ctx.drawImage(img, 0, 0, size, size);
             const data = ctx.getImageData(0, 0, size, size).data;
 
-            // Simple average color for background gradient matching
-            let r_avg = 0, g_avg = 0, b_avg = 0, count_avg = 0;
-            for(let i=0; i<data.length; i+=16) {
-                r_avg += data[i]; g_avg += data[i+1]; b_avg += data[i+2]; count_avg++;
-            }
-            const bgColor = `rgb(${Math.round(r_avg/count_avg)}, ${Math.round(g_avg/count_avg)}, ${Math.round(b_avg/count_avg)})`;
-
             const sceneCode = `
 <!DOCTYPE html>
 <html>
 <head>
     <style>
-        body { margin: 0; background: #87ceeb; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        #ui { position: absolute; bottom: 20px; left: 20px; color: white; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 8px; font-weight: bold; pointer-events: none; }
+        body { margin: 0; background: #87ceeb; overflow: hidden; font-family: sans-serif; }
+        #overlay { 
+            position: absolute; bottom: 30px; left: 30px; 
+            background: rgba(0,0,0,0.8); color: white; 
+            padding: 15px 25px; border: 3px solid #fff;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: 900; letter-spacing: 2px;
+            box-shadow: 8px 8px 0px rgba(0,0,0,0.3);
+            pointer-events: none;
+            text-transform: uppercase;
+        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
-    <div id="ui">ROBLOX-STYLE VOXEL RENDERER</div>
+    <div id="overlay">VOXEL WORLD ENGINE</div>
     <script>
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x87ceeb);
-        scene.fog = new THREE.Fog(0x87ceeb, 50, 150);
+        scene.fog = new THREE.Fog(0x87ceeb, 60, 180);
 
         const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -378,115 +402,123 @@ const App: React.FC = () => {
 
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
-        controls.dampingFactor = 0.05;
         controls.autoRotate = true;
-        controls.autoRotateSpeed = 0.5;
+        controls.autoRotateSpeed = 0.4;
 
-        const worldGroup = new THREE.Group();
-        scene.add(worldGroup);
+        const world = new THREE.Group();
+        scene.add(world);
 
-        // --- VOXEL DATA ---
+        // --- ENVIRONMENT: WATER ---
+        const waterGeo = new THREE.CircleGeometry(100, 32);
+        const waterMat = new THREE.MeshStandardMaterial({ 
+            color: 0x00aaff, 
+            transparent: true, 
+            opacity: 0.7,
+            roughness: 0,
+            metalness: 0.1
+        });
+        const water = new THREE.Mesh(waterGeo, waterMat);
+        water.rotation.x = -Math.PI / 2;
+        water.position.y = -15;
+        scene.add(water);
+
+        // --- ENVIRONMENT: CLOUDS ---
+        const cloudMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 });
+        for(let i=0; i<15; i++) {
+            const cloud = new THREE.Group();
+            const cloudSize = 5 + Math.random() * 10;
+            for(let j=0; j<5; j++) {
+                const b = new THREE.Mesh(new THREE.BoxGeometry(cloudSize, cloudSize/2, cloudSize), cloudMat);
+                b.position.set(j*2, Math.random()*2, j*1.5);
+                cloud.add(b);
+            }
+            cloud.position.set((Math.random()-0.5)*200, 40 + Math.random()*20, (Math.random()-0.5)*200);
+            scene.add(cloud);
+        }
+
+        // --- VOXELS ---
         const size = ${size};
         const pixelData = [${data.join(',')}];
-        
-        let validVoxels = [];
-        for(let y = 0; y < size; y++) {
-            for(let x = 0; x < size; x++) {
+        let voxels = [];
+        for(let y=0; y<size; y++) {
+            for(let x=0; x<size; x++) {
                 const i = (y * size + x) * 4;
-                if(pixelData[i+3] > 120) {
-                    validVoxels.push({ x, y, i });
-                }
+                if(pixelData[i+3] > 120) voxels.push({ x, y, i });
             }
         }
 
         const geometry = new THREE.BoxGeometry(1, 1, 1);
-        const material = new THREE.MeshStandardMaterial({ roughness: 0.6, metalness: 0.1 });
-        const voxelMesh = new THREE.InstancedMesh(geometry, material, validVoxels.length);
-        voxelMesh.castShadow = true;
-        voxelMesh.receiveShadow = true;
-        worldGroup.add(voxelMesh);
-
-        // --- SUB-BASE (DIRT/ROCK) ---
-        // Create a blocky base under the image for that "Chunk" look
-        const dirtMaterial = new THREE.MeshStandardMaterial({ color: 0x5d4037 });
-        const baseMesh = new THREE.InstancedMesh(geometry, dirtMaterial, validVoxels.length);
+        const material = new THREE.MeshStandardMaterial({ roughness: 0.8 });
+        const mesh = new THREE.InstancedMesh(geometry, material, voxels.length);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        
+        const baseMat = new THREE.MeshStandardMaterial({ color: 0x5d4037 });
+        const baseMesh = new THREE.InstancedMesh(geometry, baseMat, voxels.length);
         baseMesh.receiveShadow = true;
-        worldGroup.add(baseMesh);
+        
+        world.add(mesh);
+        world.add(baseMesh);
 
         const dummy = new THREE.Object3D();
         const color = new THREE.Color();
-        const voxels = [];
+        const voxelSpecs = [];
 
-        validVoxels.forEach((v, idx) => {
-            const r = pixelData[v.i] / 255;
-            const g = pixelData[v.i+1] / 255;
-            const b = pixelData[v.i+2] / 255;
-            
-            const lum = (r * 0.299 + g * 0.587 + b * 0.114);
-            const mid = size / 2;
+        voxels.forEach((v, idx) => {
+            const r = pixelData[v.i]/255, g = pixelData[v.i+1]/255, b = pixelData[v.i+2]/255;
+            const mid = size/2;
             const dist = Math.sqrt(Math.pow(v.x-mid, 2) + Math.pow(v.y-mid, 2));
+            const lum = (r*0.3 + g*0.59 + b*0.11);
             
-            // Height logic: Objects in center are taller, brighter colors are taller
-            const h = Math.max(1, (1 - dist/mid) * 10 * lum + 2);
+            // Island shape: center is thicker
+            const targetH = Math.max(1, (1-dist/mid)*12*lum + 3);
             
-            voxels.push({
-                idx,
-                x: v.x - mid,
-                z: v.y - mid,
-                targetH: h,
-                currH: 0.1,
-                color: [r, g, b],
-                delay: dist * 0.05
+            voxelSpecs.push({
+                idx, x: v.x-mid, z: v.y-mid, targetH, currH: 0.1, delay: dist*0.04
             });
 
             color.setRGB(r, g, b);
-            voxelMesh.setColorAt(idx, color);
+            mesh.setColorAt(idx, color);
         });
 
-        // --- LIGHTING ---
-        const ambient = new THREE.AmbientLight(0xffffff, 0.7);
-        scene.add(ambient);
-        
+        // Lights
+        scene.add(new THREE.AmbientLight(0xffffff, 0.8));
         const sun = new THREE.DirectionalLight(0xffffff, 1.2);
-        sun.position.set(20, 40, 20);
+        sun.position.set(50, 100, 50);
         sun.castShadow = true;
-        sun.shadow.mapSize.width = 1024;
-        sun.shadow.mapSize.height = 1024;
+        sun.shadow.camera.left = -60; sun.shadow.camera.right = 60;
+        sun.shadow.camera.top = 60; sun.shadow.camera.bottom = -60;
         scene.add(sun);
 
-        camera.position.set(50, 40, 50);
-        camera.lookAt(0, 0, 0);
+        camera.position.set(70, 50, 70);
+        camera.lookAt(0,0,0);
 
         const clock = new THREE.Clock();
         function animate() {
             requestAnimationFrame(animate);
-            const time = clock.getElapsedTime();
+            const t = clock.getElapsedTime();
             
-            // Subtle floating motion
-            worldGroup.position.y = Math.sin(time) * 1.5;
-            worldGroup.rotation.y = Math.sin(time * 0.2) * 0.05;
+            world.position.y = Math.sin(t*0.6) * 1.5;
+            water.position.y = -15 + Math.sin(t*0.5) * 0.5;
 
-            voxels.forEach(v => {
-                if(time > v.delay) {
-                    // Elastic growth animation
-                    const diff = v.targetH - v.currH;
-                    v.currH += diff * 0.1;
+            voxelSpecs.forEach(v => {
+                if(t > v.delay) {
+                    v.currH += (v.targetH - v.currH) * 0.1;
                     
-                    // Update main voxel
-                    dummy.position.set(v.x, v.currH / 2, v.z);
+                    // Main voxel
+                    dummy.position.set(v.x, v.currH/2, v.z);
                     dummy.scale.set(0.95, v.currH, 0.95);
                     dummy.updateMatrix();
-                    voxelMesh.setMatrixAt(v.idx, dummy.matrix);
+                    mesh.setMatrixAt(v.idx, dummy.matrix);
 
-                    // Update dirt base underneath
-                    dummy.position.set(v.x, -1, v.z); 
-                    dummy.scale.set(0.95, 2, 0.95);
+                    // Dirt base
+                    dummy.position.set(v.x, -2, v.z);
+                    dummy.scale.set(0.95, 4, 0.95);
                     dummy.updateMatrix();
                     baseMesh.setMatrixAt(v.idx, dummy.matrix);
                 }
             });
-            
-            voxelMesh.instanceMatrix.needsUpdate = true;
+            mesh.instanceMatrix.needsUpdate = true;
             baseMesh.instanceMatrix.needsUpdate = true;
 
             controls.update();
@@ -515,12 +547,12 @@ const App: React.FC = () => {
     img.src = imageData;
   };
 
+
   const handleVoxelize = async () => {
     if (!imageData) return;
     setStatus('generating_voxels');
     setErrorMsg('');
     setThinkingText(null);
-    // Ensure visible during processing
     setIsViewerVisible(true);
     
     let thoughtBuffer = "";
@@ -528,9 +560,7 @@ const App: React.FC = () => {
     try {
       const codeRaw = await generateVoxelScene(imageData, (thoughtFragment) => {
           thoughtBuffer += thoughtFragment;
-          
           const matches = thoughtBuffer.match(/\*\*([^*]+)\*\*/g);
-          
           if (matches && matches.length > 0) {
               const lastMatch = matches[matches.length - 1];
               const header = lastMatch.replace(/\*\*/g, '').trim();
@@ -538,58 +568,16 @@ const App: React.FC = () => {
           }
       });
       
-      // Clean and Zoom
       const code = zoomCamera(hideBodyText(codeRaw));
       setVoxelCode(code);
-      
-      // Update persisted user content if we are working on the user tile
       if (selectedTile === 'user') {
           setUserContent(prev => prev ? ({...prev, voxel: code}) : null);
       }
-      
       setViewMode('voxel');
       setStatus('idle');
       setThinkingText(null);
     } catch (err) {
       handleError(err);
-    }
-  };
-
-  const handleSegmindStylize = async () => {
-    if (!imageData) return;
-    
-    setStatus('generating_image');
-    setErrorMsg('');
-    setThinkingText("Stylizing image via Segmind Workflow (Polling)...");
-
-    try {
-        const result = await generateVoxelSegmind(imageData);
-        
-        // Segmind v4 workflows typically return an image URL in output[0] or similar
-        const stylizedImageUrl = Array.isArray(result.output) ? result.output[0] : (result.output?.image || result.output?.url || result.output);
-        
-        if (stylizedImageUrl && typeof stylizedImageUrl === 'string') {
-            setImageData(stylizedImageUrl);
-            if (userContent) {
-                setUserContent({
-                    ...userContent,
-                    image: stylizedImageUrl
-                });
-            }
-            setStatus('idle');
-            setThinkingText(null);
-        } else {
-            const errorMsg = result.error || result.details || "No image URL returned from Segmind";
-            throw new Error(errorMsg);
-        }
-    } catch (err: any) {
-        console.error("Segmind Auto-Voxel failed:", err);
-        let msg = err.message || "Segmind Stylization Failed";
-        if (msg.includes("Unauthorized") || msg.includes("API key")) {
-            msg = "Segmind API Key Error: Please go to 'Settings' -> 'Secrets' and add a valid SEGMIND_API_KEY.";
-        }
-        setErrorMsg(msg);
-        setStatus('error');
     }
   };
 
@@ -843,6 +831,16 @@ const App: React.FC = () => {
                 >
                     {status === 'generating_image' ? 'Generating...' : 'Generate'}
                 </button>
+
+                <button
+                    type="button"
+                    onClick={handleGroqGenerate}
+                    disabled={isLoading || !prompt.trim()}
+                    title="Generate a voxel scene directly from text using Groq"
+                    className="w-full sm:w-40 h-12 bg-indigo-600 text-white border-2 border-black font-bold uppercase hover:bg-indigo-700 disabled:opacity-50 transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,0.5)] active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.5)] text-sm whitespace-nowrap"
+                >
+                    {status === 'generating_groq' ? 'Groq-ing...' : 'Groq Quick'}
+                </button>
             </div>
             </div>
         )}
@@ -867,7 +865,9 @@ const App: React.FC = () => {
                     <div className="w-full max-w-3xl mb-10 text-xl font-bold tracking-tight">
                         {status === 'generating_image' 
                             ? 'Generating image with Puter.js (Flux Schnell)' 
-                            : 'Generating three.js scene with Claude 3.5 Sonnet'}
+                            : status === 'generating_groq'
+                            ? 'Generating 3D Scene with Groq (Llama 3)'
+                            : 'Building voxel world...'}
                     </div>
 
                     {/* Prompt Display */}
@@ -920,65 +920,49 @@ const App: React.FC = () => {
             {/* Action Buttons  */}
             {isViewerVisible && (
             <div className="flex flex-wrap gap-4 pt-4">
-            {imageData && voxelCode && (
-                <button
-                type="button"
-                onClick={() => setViewMode(viewMode === 'image' ? 'voxel' : 'image')}
-                disabled={isLoading}
-                title={viewMode === 'image' ? 'Switch to voxel scene view' : 'Switch to source image view'}
-                aria-label={viewMode === 'image' ? 'Switch to voxel view' : 'Switch to image view'}
-                className="flex-1 min-w-[140px] py-4 border-2 border-black bg-white font-bold uppercase transition-all duration-200 disabled:opacity-50 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-gray-50 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
-                >
-                {viewMode === 'image' ? 'View Scene' : 'View Image'}
-                </button>
-            )}
-
-            {((viewMode === 'image' && imageData) || (viewMode === 'voxel' && voxelCode)) && (
-                <button
-                type="button"
-                onClick={handleDownload}
-                disabled={isLoading}
-                title={viewMode === 'image' ? 'Download the generated image' : 'Download the voxel HTML file'}
-                aria-label={viewMode === 'image' ? 'Download image' : 'Download HTML'}
-                className="flex-1 min-w-[140px] py-4 border-2 border-black bg-white font-bold uppercase transition-all duration-200 disabled:opacity-50 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-gray-50 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
-                >
-                {viewMode === 'image' ? 'Download Image' : 'Download HTML'}
-                </button>
-            )}
             
+            {/* View Selectors */}
+            <div className="flex w-full gap-2 overflow-x-auto pb-2">
+                {imageData && (
+                    <button
+                        onClick={() => setViewMode('image')}
+                        className={`px-4 py-2 border-2 border-black font-bold text-xs uppercase transition-all ${viewMode === 'image' ? 'bg-black text-white' : 'bg-white hover:bg-gray-100'}`}
+                    >
+                        Image
+                    </button>
+                )}
+                {voxelCode && (
+                    <button
+                        onClick={() => setViewMode('voxel')}
+                        className={`px-4 py-2 border-2 border-black font-bold text-xs uppercase transition-all ${viewMode === 'voxel' ? 'bg-black text-white' : 'bg-white hover:bg-gray-100'}`}
+                    >
+                        Voxel Art
+                    </button>
+                )}
+            </div>
+
             {imageData && (
-                <>
-                <button
-                type="button"
-                onClick={handleDirectVoxelize}
-                disabled={isLoading}
-                className="px-6 py-4 bg-green-600 text-white border-2 border-black font-bold uppercase disabled:opacity-50 transition-all duration-200 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-green-700 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center gap-2"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-                    Direct Voxel (Code)
-                </button>
+                <div className="flex flex-col sm:flex-row w-full gap-4">
+                    <button
+                        type="button"
+                        onClick={handleDirectVoxelize}
+                        disabled={isLoading}
+                        className="flex-1 py-4 bg-green-600 text-white border-2 border-black font-bold uppercase transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-green-700 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center gap-2"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                        Direct Voxel art
+                    </button>
 
-                <button
-                type="button"
-                onClick={handleSegmindStylize}
-                disabled={isLoading}
-                className="px-6 py-4 bg-blue-600 text-white border-2 border-black font-bold uppercase disabled:opacity-50 transition-all duration-200 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-blue-700 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center gap-2"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>
-                    Segmind Auto-Voxel
-                </button>
-
-                <button
-                type="button"
-                onClick={handleVoxelize}
-                disabled={isLoading}
-                title="Generate 3D voxel art from this image using Claude 3.5 Sonnet"
-                aria-label="Generate voxel art"
-                className="flex-1 min-w-[160px] py-4 bg-black text-white border-2 border-black font-bold uppercase disabled:opacity-50 transition-all duration-200 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)] hover:bg-gray-900 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,0.5)] active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.5)]"
-                >
-                {voxelCode ? 'Regenerate voxels' : 'Generate voxels'}
-                </button>
-                </>
+                    <button
+                        type="button"
+                        onClick={handleVoxelize}
+                        disabled={isLoading}
+                        className="flex-1 py-4 bg-black text-white border-2 border-black font-bold uppercase transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-gray-900 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center gap-2"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                        AI Voxel Generator
+                    </button>
+                </div>
             )}
             </div>
             )}
