@@ -10,6 +10,12 @@ async function startServer() {
   const app = express();
   const PORT = Number(process.env.PORT) || 3000;
 
+  // Request logger for troubleshooting
+  app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    next();
+  });
+
   app.use(express.json({ limit: '10mb' }));
 
   // API Route: OpenRouter Proxy for Image Generation (Flux)
@@ -131,9 +137,16 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
+    // API 404 handler - prevents /api/* from falling through to the index.html
+    app.all('/api/*', (req, res) => {
+      res.status(404).json({ error: `API route ${req.method} ${req.url} not found` });
+    });
+
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
-    app.get('*all', (req, res) => {
+    
+    // Catch-all for SPA: Using regex is safer across Express versions
+    app.get(/^(?!\/api).*$/, (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
