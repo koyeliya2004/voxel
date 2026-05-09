@@ -5,11 +5,10 @@
 
 
 import React, { useState, useRef, useEffect } from 'react';
-import { generateImage, generateVoxelScene, IMAGE_SYSTEM_PROMPT, VOXEL_PROMPT } from './services/gemini';
-import { generateGroqVoxel } from './services/groq';
+import { generateImage, IMAGE_SYSTEM_PROMPT } from './services/gemini';
 import { extractHtmlFromText, hideBodyText, zoomCamera } from './utils/html';
 
-type AppStatus = 'idle' | 'generating_image' | 'generating_voxels' | 'generating_groq' | 'error';
+type AppStatus = 'idle' | 'generating_image' | 'generating_voxels' | 'error';
 
 // Available aspect ratios
 const ASPECT_RATIOS = ["1:1", "3:4", "4:3", "16:9", "9:16"];
@@ -161,28 +160,6 @@ const App: React.FC = () => {
       
       setStatus('idle');
       setShowGenerator(false); // Close generator on success
-    } catch (err) {
-      handleError(err);
-    }
-  };
-
-  const handleGroqGenerate = async () => {
-    if (!prompt.trim()) return;
-    
-    setStatus('generating_groq');
-    setErrorMsg('');
-    setThinkingText("Drafting 3D code via Groq (Llama 3)...");
-    setIsViewerVisible(true);
-    
-    try {
-      const codeRaw = await generateGroqVoxel(prompt);
-      const code = zoomCamera(hideBodyText(codeRaw));
-      setVoxelCode(code);
-      setImageData(null); // Groq is text-to-code here
-      setViewMode('voxel');
-      setStatus('idle');
-      setThinkingText(null);
-      setShowGenerator(false);
     } catch (err) {
       handleError(err);
     }
@@ -548,38 +525,7 @@ const App: React.FC = () => {
   };
 
 
-  const handleVoxelize = async () => {
-    if (!imageData) return;
-    setStatus('generating_voxels');
-    setErrorMsg('');
-    setThinkingText(null);
-    setIsViewerVisible(true);
-    
-    let thoughtBuffer = "";
 
-    try {
-      const codeRaw = await generateVoxelScene(imageData, (thoughtFragment) => {
-          thoughtBuffer += thoughtFragment;
-          const matches = thoughtBuffer.match(/\*\*([^*]+)\*\*/g);
-          if (matches && matches.length > 0) {
-              const lastMatch = matches[matches.length - 1];
-              const header = lastMatch.replace(/\*\*/g, '').trim();
-              setThinkingText(prev => prev === header ? prev : header);
-          }
-      });
-      
-      const code = zoomCamera(hideBodyText(codeRaw));
-      setVoxelCode(code);
-      if (selectedTile === 'user') {
-          setUserContent(prev => prev ? ({...prev, voxel: code}) : null);
-      }
-      setViewMode('voxel');
-      setStatus('idle');
-      setThinkingText(null);
-    } catch (err) {
-      handleError(err);
-    }
-  };
 
   const handleDownload = () => {
     if (viewMode === 'image' && imageData) {
@@ -608,7 +554,7 @@ const App: React.FC = () => {
       return useOptimization ? `${IMAGE_SYSTEM_PROMPT}\n\nSubject: ${prompt}` : prompt;
     }
     if (status === 'generating_voxels') {
-      return VOXEL_PROMPT;
+      return '';
     }
     return '';
   };
@@ -634,13 +580,13 @@ const App: React.FC = () => {
         {/* Header */}
         <div className="text-center border-b-2 border-black pb-6">
           <h1 className="text-4xl sm:text-5xl font-black leading-[0.9] tracking-tight">IMAGE TO VOXEL ART</h1>
-          <p className="mt-2 text-lg text-gray-600 font-semibold">Transform images via Claude 3.5 Sonnet or direct pixel mapping.</p>
+          <p className="mt-2 text-lg text-gray-600 font-semibold">Transform images into 3D voxel art via direct pixel mapping.</p>
           
           {/* API Information & Quota Help */}
           <div className="mt-4 p-3 bg-blue-50 border border-blue-200 text-left text-xs space-y-2">
             <p className="font-bold text-blue-800 uppercase flex items-center gap-1">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-              Smart & Direct Workflows
+              Direct Workflows
             </p>
             <p className="text-blue-700 leading-tight">
               <strong>Direct Voxel (Code):</strong> Instantly maps pixels to 3D boxes in your browser—no API key required.
@@ -831,16 +777,6 @@ const App: React.FC = () => {
                 >
                     {status === 'generating_image' ? 'Generating...' : 'Generate'}
                 </button>
-
-                <button
-                    type="button"
-                    onClick={handleGroqGenerate}
-                    disabled={isLoading || !prompt.trim()}
-                    title="Generate a voxel scene directly from text using Groq"
-                    className="w-full sm:w-40 h-12 bg-indigo-600 text-white border-2 border-black font-bold uppercase hover:bg-indigo-700 disabled:opacity-50 transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,0.5)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,0.5)] active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.5)] text-sm whitespace-nowrap"
-                >
-                    {status === 'generating_groq' ? 'Groq-ing...' : 'Groq Quick'}
-                </button>
             </div>
             </div>
         )}
@@ -865,8 +801,6 @@ const App: React.FC = () => {
                     <div className="w-full max-w-3xl mb-10 text-xl font-bold tracking-tight">
                         {status === 'generating_image' 
                             ? 'Generating image with Puter.js (Flux Schnell)' 
-                            : status === 'generating_groq'
-                            ? 'Generating 3D Scene with Groq (Llama 3)'
                             : 'Building voxel world...'}
                     </div>
 
@@ -942,27 +876,15 @@ const App: React.FC = () => {
             </div>
 
             {imageData && (
-                <div className="flex flex-col sm:flex-row w-full gap-4">
-                    <button
-                        type="button"
-                        onClick={handleDirectVoxelize}
-                        disabled={isLoading}
-                        className="flex-1 py-4 bg-green-600 text-white border-2 border-black font-bold uppercase transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-green-700 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center gap-2"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-                        Direct Voxel art
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={handleVoxelize}
-                        disabled={isLoading}
-                        className="flex-1 py-4 bg-black text-white border-2 border-black font-bold uppercase transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-gray-900 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center gap-2"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-                        AI Voxel Generator
-                    </button>
-                </div>
+                <button
+                    type="button"
+                    onClick={handleDirectVoxelize}
+                    disabled={isLoading}
+                    className="w-full py-4 bg-green-600 text-white border-2 border-black font-bold uppercase transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-green-700 hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-0 active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center gap-2"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                    Direct Voxel art
+                </button>
             )}
             </div>
             )}

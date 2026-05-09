@@ -1,6 +1,6 @@
 {
   "name": "Image to Voxel Art",
-  "description": "Create beautiful voxel art scenes from images using Claude 3.5 Sonnet and Flux via OpenRouter.",
+  "description": "Transform images into 3D voxel art via direct browser-based pixel mapping and AI image generation.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }
