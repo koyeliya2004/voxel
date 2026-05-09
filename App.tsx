@@ -20,9 +20,10 @@ import {
 } from 'lucide-react';
 import { generateImage, IMAGE_SYSTEM_PROMPT } from './services/imageService';
 import { extractHtmlFromText, hideBodyText, zoomCamera } from './utils/html';
+import VoxelNexus from './VoxelNexus';
 
 type AppStatus = 'idle' | 'generating_image' | 'generating_voxels' | 'error';
-type View = 'home' | 'app' | 'history';
+type View = 'home' | 'app' | 'history' | 'nexus';
 
 interface HistoryItem {
     id: string;
@@ -350,6 +351,12 @@ const App: React.FC = () => {
           >
             History <HistoryIcon size={24} />
           </button>
+          <button 
+            onClick={() => setView('nexus')}
+            className="px-10 py-5 bg-blue-600 text-white border-2 border-black font-black uppercase text-xl shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
+          >
+            Voxel Nexus
+          </button>
         </div>
       </header>
 
@@ -674,6 +681,7 @@ const App: React.FC = () => {
         {view === 'home' && renderHome()}
         {view === 'app' && renderApp()}
         {view === 'history' && renderHistory()}
+        {view === 'nexus' && <VoxelNexus />}
       </AnimatePresence>
     </div>
   );
