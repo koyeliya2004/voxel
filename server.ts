@@ -77,6 +77,41 @@ async function startServer() {
     res.status(500).json({ error: "All image models failed", lastError });
   });
 
+
+
+  // API Route: Groq Proxy for Voxel HTML Generation
+  app.post("/api/generate-voxel", async (req, res) => {
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ error: "GROQ_API_KEY not configured in settings. Please check your project secrets." });
+    }
+
+    try {
+      const payload = req.body;
+      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const contentType = response.headers.get("content-type") || "";
+      const isJson = contentType.includes("application/json");
+      const data = isJson ? await response.json() : { error: await response.text() };
+
+      if (!response.ok) {
+        const errorMessage = (data as any)?.error?.message || (data as any)?.error || "Groq request failed";
+        return res.status(response.status).json({ error: errorMessage });
+      }
+
+      return res.json(data);
+    } catch (err: any) {
+      console.error("Error in /api/generate-voxel:", err.message);
+      return res.status(500).json({ error: err.message || "Unexpected server error" });
+    }
+  });
   // Health check
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok", openRouterConfigured: !!process.env.OPENROUTER_API_KEY });
