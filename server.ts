@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT) || 3000;
 
   app.use(express.json({ limit: '10mb' }));
 
@@ -76,9 +76,6 @@ async function startServer() {
 
     res.status(500).json({ error: "All image models failed", lastError });
   });
-
-  // Serve static examples folder
-  app.use('/examples', express.static(path.join(process.cwd(), 'examples')));
 
   // Health check
   app.get("/api/health", (req, res) => {
