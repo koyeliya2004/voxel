@@ -23,7 +23,6 @@ import {
   Globe,
   Cpu
 } from 'lucide-react';
-import VoxelBackground from './VoxelBackground';
 import { generateImage, IMAGE_SYSTEM_PROMPT } from './services/imageService';
 import { extractHtmlFromText, hideBodyText, zoomCamera } from './utils/html';
 
@@ -337,221 +336,220 @@ const App: React.FC = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="max-w-4xl w-full space-y-12 py-12 relative z-10"
+      className="max-w-4xl w-full space-y-12 py-12"
     >
-      <header className="text-center space-y-8 py-12">
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border-2 border-emerald-400/30 rounded-full text-emerald-400 font-black uppercase text-xs">
-          <Zap size={14} fill="currentColor" /> Voxel Matrix Suite
+      <header className="text-center space-y-8">
+        <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border-2 border-blue-600 rounded-full text-blue-600 font-black uppercase text-xs">
+          <Zap size={14} fill="currentColor" /> Web3D Voxel Suite
         </div>
-        <h1 className="text-6xl sm:text-8xl font-black tracking-tighter leading-[0.8] uppercase flex flex-col items-center text-white">
+        <h1 className="text-6xl sm:text-8xl font-black tracking-tighter leading-[0.8] uppercase flex flex-col items-center">
           <span>VOXEL</span>
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-emerald-400">WORLD</span>
-          <span className="text-2xl mt-4 bg-indigo-600 text-white px-6 py-2 shadow-[8px_8px_0px_0px_rgba(30,58,138,0.5)] border border-white/20">ENGINE v1.0</span>
+          <span className="text-blue-600">WORLD</span>
+          <span className="text-2xl mt-4 bg-black text-white px-6 py-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)]">ENGINE v1.0</span>
         </h1>
-        <p className="text-xl font-medium text-slate-400 max-w-xl mx-auto leading-relaxed">
-          The ultimate 16-bit 3D creation suite. Transform images into voxels or generate complex procedural structures through natural language.
+        <p className="text-xl font-medium text-gray-600 max-w-xl mx-auto leading-relaxed">
+          The ultimate 3D voxelization platform. Transform your photos into living pixel-perfect dioramas instantly.
         </p>
         <div className="flex flex-wrap justify-center gap-6 pt-4">
           <button 
             onClick={() => setView('app')}
-            className="group px-10 py-5 bg-white text-black font-black uppercase text-xl shadow-[10px_10px_0px_0px_rgba(34,211,238,0.3)] hover:scale-[1.02] hover:shadow-[15px_15px_0px_0px_rgba(34,211,238,0.4)] transition-all flex items-center gap-3 active:scale-95"
+            className="group px-10 py-5 bg-black text-white border-2 border-black font-black uppercase text-xl shadow-[10px_10px_0px_0px_rgba(37,99,235,1)] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all flex items-center gap-3"
           >
-            Initiate <ChevronRight className="group-hover:translate-x-1 transition-transform" />
+            Start Creating <ChevronRight className="group-hover:translate-x-1 transition-transform" />
           </button>
           <button 
             onClick={() => setView('history')}
-            className="px-10 py-5 bg-indigo-950/40 text-white border-2 border-white/20 font-black uppercase text-xl shadow-[10px_10px_0px_0px_rgba(255,255,255,0.05)] hover:bg-indigo-900/60 transition-all flex items-center gap-3 backdrop-blur-md active:scale-95"
+            className="px-10 py-5 bg-white text-black border-2 border-black font-black uppercase text-xl shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all flex items-center gap-3"
           >
-            Vault <HistoryIcon size={24} />
+            History <HistoryIcon size={24} />
           </button>
           <button 
             onClick={() => setView('nexus')}
-            className="px-10 py-5 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white border-2 border-white/20 font-black uppercase text-xl shadow-[10px_10px_0px_0px_rgba(139,92,246,0.2)] hover:scale-[1.02] transition-all flex items-center gap-3 active:scale-95"
+            className="px-10 py-5 bg-gradient-to-r from-cyan-400 to-blue-600 text-white border-2 border-black font-black uppercase text-xl shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all flex items-center gap-3"
           >
-            Nexus <Box size={24} />
+            Voxel Nexus <Box size={24} />
           </button>
         </div>
       </header>
 
-      <section className="grid md:grid-cols-2 gap-12 border-t-4 border-white/10 pt-12">
-        <div className="space-y-8 text-white p-8 bg-indigo-950/20 backdrop-blur-2xl rounded-[32px] border border-white/10 shadow-2xl ring-1 ring-white/10">
+      <section className="grid md:grid-cols-2 gap-12 border-t-4 border-black pt-12">
+        <div className="space-y-8">
           <div className="space-y-2">
-            <h2 className="text-4xl font-black uppercase flex items-center gap-3 italic">
-              <Info size={32} className="text-emerald-400" />
-              Creative Suite
+            <h2 className="text-4xl font-black uppercase flex items-center gap-3">
+              <Info size={32} className="text-blue-600" />
+              How it works
             </h2>
-            <p className="text-indigo-400/60 font-bold uppercase text-[10px] tracking-[0.3em]">Two powerful ways to build</p>
+            <p className="text-gray-400 font-bold uppercase text-xs tracking-widest">3-Step 3D Transformation</p>
           </div>
-          <div className="space-y-8 text-sm font-medium">
+          <div className="space-y-8">
             <div className="flex gap-6 group">
-              <div className="w-12 h-12 shrink-0 bg-white/5 text-white flex items-center justify-center font-black text-xl group-hover:bg-emerald-500 transition-colors border border-white/20 rounded-xl shadow-lg ring-1 ring-white/10">1</div>
+              <div className="w-12 h-12 shrink-0 bg-black text-white flex items-center justify-center font-black text-xl group-hover:bg-blue-600 transition-colors">1</div>
               <div>
-                <h3 className="font-black uppercase text-xl text-white">Image Translation</h3>
-                <p className="text-slate-400 leading-relaxed">Turn any 2D image into a complex 3D voxel diorama. Our engine maps depth and color data to create physical geometric structures.</p>
+                <h3 className="font-black uppercase text-xl">Input Your Vision</h3>
+                <p className="text-gray-600 leading-relaxed">Upload any image or use our AI prompt system to generate a brand new concept scene.</p>
               </div>
             </div>
             <div className="flex gap-6 group">
-              <div className="w-12 h-12 shrink-0 bg-white/5 text-white flex items-center justify-center font-black text-xl group-hover:bg-blue-500 transition-colors border border-white/20 rounded-xl shadow-lg ring-1 ring-white/10">2</div>
+              <div className="w-12 h-12 shrink-0 bg-black text-white flex items-center justify-center font-black text-xl group-hover:bg-blue-600 transition-colors">2</div>
               <div>
-                <h3 className="font-black uppercase text-xl text-white">Direct Synthesis</h3>
-                <p className="text-slate-400 leading-relaxed">Simply describe what you want to create. The system calculates the geometry and renders a fully interactive 3D scene from your description.</p>
+                <h3 className="font-black uppercase text-xl">Pixel Extraction</h3>
+                <p className="text-gray-600 leading-relaxed">Our browser-based engine maps every pixel to a 3D coordinate, preserving colors with mathematical precision.</p>
               </div>
             </div>
             <div className="flex gap-6 group">
-              <div className="w-12 h-12 shrink-0 bg-white/10 text-white flex items-center justify-center font-black text-xl group-hover:bg-purple-500 transition-colors border border-white/20 rounded-xl shadow-lg ring-1 ring-white/10">3</div>
+              <div className="w-12 h-12 shrink-0 bg-black text-white flex items-center justify-center font-black text-xl group-hover:bg-blue-600 transition-colors">3</div>
               <div>
-                <h3 className="font-black uppercase text-xl text-white">Web-Ready Assets</h3>
-                <p className="text-slate-400 leading-relaxed">Every creation can be exported as a standalone file. Share your 3D worlds easily across any modern browser with zero dependencies.</p>
+                <h3 className="font-black uppercase text-xl">3D Voxelization</h3>
+                <p className="text-gray-600 leading-relaxed">Thousands of geometric blocks are extruded into a real-time Three.js scene with water, clouds, and lighting.</p>
               </div>
             </div>
           </div>
         </div>
         
         <div className="space-y-8">
-            <div className="bg-emerald-950/20 backdrop-blur-2xl border border-white/10 p-8 flex flex-col justify-center gap-6 shadow-2xl relative overflow-hidden group rounded-[32px] ring-1 ring-white/10">
-                <Globe className="absolute -right-8 -bottom-8 w-48 h-48 text-emerald-400 opacity-5 group-hover:rotate-45 transition-transform duration-1000" />
+            <div className="bg-gray-100 border-4 border-black p-8 flex flex-col justify-center gap-6 shadow-[12px_12px_0px_0px_rgba(0,0,0,0.1)] relative overflow-hidden group">
+                <Globe className="absolute -right-8 -bottom-8 w-48 h-48 text-black opacity-5 group-hover:rotate-45 transition-transform duration-1000" />
                 <div className="flex items-center gap-3 relative z-10">
-                    <div className="p-3 bg-emerald-500/10 rounded-lg text-emerald-400 font-black border border-emerald-500/20 text-sm italic">PRO TECH</div>
-                    <p className="font-black uppercase text-lg text-white">Efficiency Matrix</p>
+                    <div className="p-3 bg-blue-100 rounded-lg text-blue-600 font-black border-2 border-blue-200 text-sm">PRO TECH</div>
+                    <p className="font-black uppercase text-lg">Hardware Accelerated</p>
                 </div>
-                <p className="text-lg font-medium text-slate-300 leading-relaxed relative z-10">
-                    "Optimized for high-density rendering. Create massive 3D scenes with smooth interaction even on standard browser hardware."
+                <p className="text-lg font-medium text-gray-700 leading-relaxed relative z-10">
+                    "Built on Three.js InstancedMesh for hyper-efficient rendering. Create complex dioramas without slowing down your browser."
                 </p>
                 <div className="flex gap-4 relative z-10">
-                    <div className="flex items-center gap-1 text-[10px] font-black text-emerald-400 uppercase tracking-wider"><Cpu size={14} /> GPU Accelerated</div>
-                    <div className="flex items-center gap-1 text-[10px] font-black text-blue-400 uppercase tracking-wider"><Zap size={14} /> Ultra Fast</div>
+                    <div className="flex items-center gap-1 text-xs font-black text-blue-600 uppercase"><Cpu size={14} /> GPU Enabled</div>
+                    <div className="flex items-center gap-1 text-xs font-black text-green-600 uppercase"><Zap size={14} /> 0ms Latency</div>
                 </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-                <div className="p-6 border border-white/10 bg-indigo-900/10 backdrop-blur-xl animate-pulse space-y-2 rounded-2xl ring-1 ring-white/10">
-                    <p className="text-3xl font-black text-white">100%</p>
-                    <p className="text-[10px] font-black uppercase text-indigo-400 tracking-widest">Standalone</p>
+                <div className="p-6 border-2 border-black bg-white space-y-2">
+                    <p className="text-2xl font-black">100%</p>
+                    <p className="text-[10px] font-black uppercase text-gray-400">Private & Local</p>
                 </div>
-                <div className="p-6 border border-white/10 bg-purple-900/10 backdrop-blur-xl space-y-2 rounded-2xl ring-1 ring-white/10">
-                    <p className="text-3xl font-black text-white">∞</p>
-                    <p className="text-[10px] font-black uppercase text-purple-400 tracking-widest">Procedural</p>
+                <div className="p-6 border-2 border-black bg-white space-y-2">
+                    <p className="text-2xl font-black">∞</p>
+                    <p className="text-[10px] font-black uppercase text-gray-400">Exports</p>
                 </div>
             </div>
         </div>
       </section>
 
-      <section className="border-t-4 border-white/20 pt-12 space-y-12">
+      <section className="border-t-4 border-black pt-12 space-y-12">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div className="space-y-2">
-                <h2 className="text-4xl font-black uppercase flex items-center gap-3 text-white">
-                <Box size={32} className="text-cyan-400" />
-                Synthesis Core
+                <h2 className="text-4xl font-black uppercase flex items-center gap-3">
+                <Box size={32} className="text-fuchsia-600" />
+                Nexus Protocol
                 </h2>
-                <p className="text-slate-500 font-bold uppercase text-xs tracking-widest">Procedural Architecture</p>
+                <p className="text-gray-400 font-bold uppercase text-xs tracking-widest">Text-to-Code Neural Engine</p>
             </div>
-            <div className="px-4 py-2 bg-emerald-500/10 border-2 border-emerald-400/50 text-emerald-400 font-black uppercase text-[10px]">Verified Logic</div>
+            <div className="px-4 py-2 bg-fuchsia-100 border-2 border-fuchsia-600 text-fuchsia-600 font-black uppercase text-[10px]">Experimental v3.0</div>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
-            <div className="p-8 bg-black/40 backdrop-blur-md text-white border-2 border-white/10 space-y-4 hover:shadow-[0_0_30px_rgba(34,211,238,0.2)] transition-all group rounded-2xl">
+            <div className="p-8 bg-black text-white border-2 border-black space-y-4 hover:shadow-[8px_8px_0px_0px_rgba(217,70,239,1)] transition-all group">
                 <Zap className="text-cyan-400 group-hover:scale-110 transition-transform" size={32} />
                 <h3 className="font-black uppercase text-xl">Semantic Input</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">Skip the complexity. Use regular language to define your vision and watch the system construct it.</p>
+                <p className="text-gray-400 text-sm leading-relaxed">Skip the image entirely. Describe your object in natural language and watch the matrix construct it from scratch using procedural logic.</p>
                 <ul className="text-[10px] font-mono text-cyan-500/60 uppercase space-y-1 pt-2">
-                  <li>• Natural to Geometric Map</li>
-                  <li>• Dynamic Scene building</li>
+                  <li>• NLP to Geometry mapping</li>
+                  <li>• Instant logic derivation</li>
                 </ul>
             </div>
-            <div className="p-8 bg-black/40 backdrop-blur-md text-white border-2 border-white/10 space-y-4 hover:shadow-[0_0_30px_rgba(34,211,238,0.2)] transition-all group rounded-2xl">
-                <Cpu className="text-emerald-400 group-hover:rotate-12 transition-transform" size={32} />
-                <h3 className="font-black uppercase text-xl">Logic Engine</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">Integrated core for instant generation of complex patterns and interactive 3D structures.</p>
-                <ul className="text-[10px] font-mono text-emerald-500/60 uppercase space-y-1 pt-2">
-                  <li>• Real-time Synthesis</li>
-                  <li>• Interactive Viewport</li>
+            <div className="p-8 bg-white border-2 border-black space-y-4 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all group">
+                <Cpu className="text-fuchsia-600 group-hover:rotate-12 transition-transform" size={32} />
+                <h3 className="font-black uppercase text-xl">Llama 70B Core</h3>
+                <p className="text-gray-600 text-sm leading-relaxed">Powered by Llama-3.3-70B via Groq LPUs for sub-second code generation of complex Three.js procedural geometries.</p>
+                <ul className="text-[10px] font-mono text-fuchsia-500/60 uppercase space-y-1 pt-2">
+                  <li>• Inference in &lt;1.0s</li>
+                  <li>• High-density voxel grids</li>
                 </ul>
             </div>
-            <div className="p-8 bg-black/40 backdrop-blur-md text-white border-2 border-white/10 space-y-4 hover:shadow-[0_0_30px_rgba(34,211,238,0.2)] transition-all group rounded-2xl">
-                <Code2 className="text-blue-400 group-hover:-translate-y-1 transition-transform" size={32} />
-                <h3 className="font-black uppercase text-xl">Web Delivery</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">Optimized code that runs directly in your browser, providing professional-grade 3D artifacts.</p>
+            <div className="p-8 bg-gray-50 border-2 border-black space-y-4 hover:shadow-[8px_8px_0px_0px_rgba(37,99,235,1)] transition-all group">
+                <Code2 className="text-blue-600 group-hover:-translate-y-1 transition-transform" size={32} />
+                <h3 className="font-black uppercase text-xl">Native WebGL</h3>
+                <p className="text-gray-600 text-sm leading-relaxed">Generates optimized Three.js boilerplate code that runs directly in any modern browser without heavy assets or server-side rendering.</p>
                 <ul className="text-[10px] font-mono text-blue-500/60 uppercase space-y-1 pt-2">
-                  <li>• No External Assets</li>
-                  <li>• Direct HTML Export</li>
+                  <li>• Pure client-side execution</li>
+                  <li>• OrbitControls interaction</li>
                 </ul>
             </div>
         </div>
 
         <div className="grid md:grid-cols-2 gap-8">
-          <div className="bg-slate-900/80 backdrop-blur-md text-slate-100 p-8 border-2 border-white/10 rounded-2xl">
+          <div className="bg-slate-900 text-slate-100 p-8 border-2 border-black rounded-lg">
             <h4 className="font-black uppercase text-lg mb-4 flex items-center gap-2">
               <Plus size={20} className="text-cyan-400" />
-              Operational Guide
+              How to operate
             </h4>
             <div className="space-y-4 text-sm font-medium">
               <div className="flex gap-4">
                 <span className="shrink-0 size-6 bg-cyan-500 text-black flex items-center justify-center font-black rounded">1</span>
-                <p>Navigate to the <span className="text-cyan-400 underline">Nexus</span> workspace to access text synthesis.</p>
+                <p>Navigate to the <span className="text-cyan-400 underline">Nexus</span> tab from the header or home button.</p>
               </div>
               <div className="flex gap-4">
                 <span className="shrink-0 size-6 bg-cyan-500 text-black flex items-center justify-center font-black rounded">2</span>
-                <p>Enter a descriptive prompt focusing on geometry and materials.</p>
+                <p>Enter a descriptive prompt like <code className="bg-black/50 px-1 py-0.5 rounded text-fuchsia-400">"Modern skyscraper with neon lights"</code>.</p>
               </div>
               <div className="flex gap-4">
                 <span className="shrink-0 size-6 bg-cyan-500 text-black flex items-center justify-center font-black rounded">3</span>
-                <p>Hit <span className="text-cyan-400">Initiate Render</span> to build the world in your viewport.</p>
+                <p>Hit <span className="text-cyan-400">Initiate Render</span> and watch the AI generate the Three.js code and render the result.</p>
               </div>
               <div className="flex gap-4">
                 <span className="shrink-0 size-6 bg-cyan-500 text-black flex items-center justify-center font-black rounded">4</span>
-                <p>Switch to <span className="text-cyan-400 font-bold">Source</span> to tweak the underlying architecture.</p>
+                <p>Switch between <span className="text-cyan-400 font-bold">Viewport</span> to see the 3D model and <span className="text-fuchsia-400 font-bold">Source</span> to inspect the code.</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-cyan-500/10 backdrop-blur-md border-2 border-cyan-400/20 p-8 flex flex-col justify-center rounded-2xl">
+          <div className="bg-yellow-50 border-2 border-black p-8 flex flex-col justify-center">
             <div className="flex items-start gap-4 mb-4">
-              <Info className="shrink-0 text-cyan-400" />
-              <h4 className="font-black uppercase text-lg text-white">Efficiency Strategy</h4>
+              <Info className="shrink-0 text-yellow-600" />
+              <h4 className="font-black uppercase text-lg text-yellow-900">Optimization Matrix</h4>
             </div>
-            <p className="text-sm font-medium text-slate-300 leading-relaxed">
-                The engine works best with structured descriptions. Be specific about shapes and patterns to help the core determine the best procedural approach for your creation.
+            <p className="text-sm font-medium text-yellow-900 leading-relaxed">
+                Voxel Nexus excels at structured geometries. For the best results, include keywords like <span className="underline decoration-yellow-400">"detailed"</span>, <span className="underline decoration-yellow-400">"symmetrical"</span>, or specific materials like <span className="underline decoration-yellow-400">"neon"</span>, <span className="underline decoration-yellow-400">"stone"</span>, or <span className="underline decoration-yellow-400">"gold"</span>.
             </p>
-            <div className="mt-6 p-4 bg-white/5 border border-white/10 rounded text-[11px] font-mono text-cyan-300">
-              PROCEDURAL CORE ENGAGED
+            <div className="mt-6 p-4 bg-white/50 border border-yellow-200 rounded text-[11px] font-mono text-yellow-800">
+              STABLE DIFFUSION + LLAMA-3 SYNTHESIS ACTIVE
             </div>
           </div>
         </div>
       </section>
 
-      <footer className="text-center pt-12 border-t-2 border-white/10 border-dashed">
-        <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Copyright © 2024 VoxelWorld Engine • Created for artists</p>
+      <footer className="text-center pt-12 border-t-2 border-black border-dashed">
+        <p className="text-xs font-black uppercase tracking-[0.2em] text-gray-400">Copyright © 2024 VoxelWorld Engine • All creators welcome</p>
       </footer>
     </motion.div>
   );
 
   const renderHistory = () => (
     <motion.div 
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ duration: 0.5, ease: "easeOut" }}
-      className="max-w-4xl w-full space-y-12 py-12 relative z-10"
+      initial={{ opacity: 0, x: 50 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -50 }}
+      className="max-w-4xl w-full space-y-12 py-12"
     >
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-white/10 pb-8">
-        <button onClick={() => setView('home')} className="flex items-center gap-2 font-black uppercase text-xl text-white hover:text-indigo-400 transition-colors w-fit group">
-          <ArrowLeft size={28} className="group-hover:-translate-x-1 transition-transform" /> Home
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b-4 border-black pb-8">
+        <button onClick={() => setView('home')} className="flex items-center gap-2 font-black uppercase text-xl hover:text-blue-600 transition-colors w-fit">
+          <ArrowLeft size={28} /> Home
         </button>
         <div className="text-left sm:text-right">
-            <h1 className="text-5xl font-black uppercase tracking-tight text-white">Vault</h1>
-            <p className="font-bold text-indigo-400/60 uppercase text-[10px] tracking-[0.3em] mt-1">Stored Creations ({history.length})</p>
+            <h1 className="text-5xl font-black uppercase tracking-tight">Vault</h1>
+            <p className="font-bold text-gray-400 uppercase text-xs">Stored Creations ({history.length})</p>
         </div>
       </div>
 
       {history.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-32 text-slate-500 border-2 border-dashed border-white/10 rounded-[40px] bg-white/5 backdrop-blur-md">
-          <HistoryIcon size={80} className="mb-6 opacity-20 text-indigo-400" />
-          <p className="font-black uppercase text-xl tracking-widest">The vault is empty</p>
+        <div className="flex flex-col items-center justify-center py-32 text-gray-400 border-4 border-dashed border-gray-200">
+          <HistoryIcon size={80} className="mb-6 opacity-10" />
+          <p className="font-black uppercase text-xl">The vault is empty</p>
           <button 
             onClick={() => setView('app')} 
-            className="mt-8 px-10 py-4 bg-white text-black font-black uppercase text-xs rounded-xl hover:scale-105 transition-transform"
+            className="mt-6 px-8 py-3 bg-black text-white font-black uppercase text-sm hover:scale-105 transition-transform"
           >
-            Deploy Creator
+            Deploy New Creator
           </button>
         </div>
       ) : (
@@ -560,29 +558,26 @@ const App: React.FC = () => {
             <motion.div 
               layout
               key={item.id} 
-              className="border border-white/10 bg-white/5 backdrop-blur-md shadow-2xl flex flex-col group overflow-hidden rounded-[32px] ring-1 ring-white/10 hover:ring-white/30 transition-all"
+              className="border-2 border-black bg-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col group overflow-hidden"
             >
-               <div className="aspect-square relative overflow-hidden bg-[#0a0a0a] border-b border-white/10">
-                  <img src={item.image} alt={item.prompt} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 opacity-80 group-hover:opacity-100" />
-                  <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+               <div className="aspect-square relative overflow-hidden bg-gray-100 border-b-2 border-black">
+                  <img src={item.image} alt={item.prompt} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                  <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button 
                       onClick={(e) => removeFromHistory(item.id, e)}
-                      className="p-3 bg-red-500/20 text-red-400 border border-red-500/30 backdrop-blur-md rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-xl"
+                      className="p-3 bg-red-500 text-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 active:translate-y-0 transition-transform"
                     >
-                      <Trash2 size={18} />
+                      <Trash2 size={20} />
                     </button>
                   </div>
                </div>
                <div className="p-6 space-y-4">
                   <div>
-                    <p className="text-[10px] font-black text-white/50 uppercase tracking-widest flex items-center gap-2 mb-1">
-                      <Sparkles size={10} className="text-indigo-400" /> SOURCE
-                    </p>
-                    <p className="text-xs font-bold text-white uppercase line-clamp-1">
+                    <p className="text-xs font-black text-gray-800 uppercase line-clamp-1 mb-1">
                         {item.prompt || 'Manual Upload'}
                     </p>
-                    <p className="text-[9px] text-slate-500 font-mono mt-2 flex items-center gap-1 uppercase tracking-tighter">
-                        {new Date(item.timestamp).toLocaleString()}
+                    <p className="text-[10px] text-gray-400 font-mono flex items-center gap-1">
+                        <Plus size={10} /> {new Date(item.timestamp).toLocaleDateString()}
                     </p>
                   </div>
                   <div className="flex gap-3 pt-2">
@@ -593,13 +588,13 @@ const App: React.FC = () => {
                             setViewMode(item.voxel ? 'voxel' : 'image');
                             setView('app');
                         }}
-                        className="flex-grow py-3 bg-white text-black text-[10px] font-black uppercase rounded-xl hover:scale-[1.02] active:scale-95 transition-all shadow-lg"
+                        className="flex-grow py-3 bg-black text-white border-2 border-black text-xs font-black uppercase hover:bg-blue-600 transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
                     >
                         Review
                     </button>
                     <button 
                         onClick={() => handleDownload(item.voxel || item.image, item.voxel ? 'voxel' : 'image')}
-                        className="p-3 border border-white/10 bg-white/5 text-white hover:bg-white/10 transition-all rounded-xl shadow-lg"
+                        className="p-3 border-2 border-black text-black hover:bg-gray-100 transition-colors"
                         title="Download Asset"
                     >
                         <Download size={18} />
@@ -620,20 +615,20 @@ const App: React.FC = () => {
       exit={{ opacity: 0, scale: 0.98 }}
       className="w-full max-w-2xl space-y-8 py-12"
     >
-      <header className="flex items-center justify-between border-b border-white/10 pb-6">
-        <button onClick={() => setView('home')} className="flex items-center gap-2 font-black uppercase text-lg group text-white">
+      <header className="flex items-center justify-between border-b-4 border-black pb-6">
+        <button onClick={() => setView('home')} className="flex items-center gap-2 font-black uppercase text-lg group">
           <ArrowLeft size={24} className="group-hover:-translate-x-1 transition-transform" /> Home
         </button>
         <div className="flex items-center gap-4">
             <button 
                 onClick={() => setView('history')} 
-                className="font-black uppercase text-[10px] tracking-widest px-6 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-white transition-all flex items-center gap-2 rounded-full"
+                className="font-black uppercase text-xs px-4 py-2 border-2 border-black hover:bg-black hover:text-white transition-all flex items-center gap-2"
             >
                <HistoryIcon size={14} /> Vault
             </button>
             <button 
                 onClick={() => setView('nexus')} 
-                className="font-black uppercase text-[10px] tracking-widest px-6 py-2 bg-indigo-600/20 border border-indigo-400/30 hover:bg-indigo-600/40 text-blue-300 transition-all flex items-center gap-2 rounded-full"
+                className="font-black uppercase text-xs px-4 py-2 border-2 border-blue-600 hover:bg-blue-600 hover:text-white transition-all flex items-center gap-2"
             >
                <Layers size={14} /> Nexus
             </button>
@@ -641,8 +636,8 @@ const App: React.FC = () => {
       </header>
 
       {/* Generator Form */}
-      <div className="space-y-6 border border-white/10 p-8 bg-white/5 backdrop-blur-2xl shadow-2xl relative rounded-[32px] ring-1 ring-white/10">
-        <div className="absolute -top-3 -right-3 bg-indigo-600 text-white px-4 py-1 font-black text-[10px] uppercase border border-white/20 shadow-xl rounded-lg">
+      <div className="space-y-6 border-4 border-black p-8 bg-gray-50 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative">
+        <div className="absolute -top-3 -right-3 bg-blue-600 text-white px-3 py-1 font-black text-[10px] uppercase border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
             Active Workspace
         </div>
         
@@ -652,36 +647,36 @@ const App: React.FC = () => {
              onDragLeave={() => setIsDragging(false)}
              onDrop={(e) => { e.preventDefault(); setIsDragging(false); const file = e.dataTransfer.files?.[0]; if(file) processFile(file); }}
              onClick={() => fileInputRef.current?.click()}
-             className={`w-full h-48 border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all rounded-2xl ${isDragging ? 'bg-indigo-500/10 border-indigo-400 scale-[0.99] text-indigo-400' : 'bg-white/5 border-white/10 hover:bg-white/10 text-slate-400'}`}
+             className={`w-full h-48 border-4 border-dashed border-black flex flex-col items-center justify-center cursor-pointer transition-all ${isDragging ? 'bg-blue-50 border-blue-600 scale-[0.99]' : 'bg-white hover:bg-gray-50'}`}
           >
             <input type="file" accept={ALLOWED_MIME_TYPES.join(',')} ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
-            <Upload size={40} className={`mb-3`} />
-            <p className="font-black uppercase text-sm">Scan physical asset</p>
-            <p className="text-[10px] font-bold opacity-30 uppercase mt-1">Drag file here</p>
+            <Upload size={40} className={`mb-3 ${isDragging ? 'text-blue-600' : 'text-gray-400'}`} />
+            <p className="font-black uppercase text-sm text-gray-500">Scan physical asset</p>
+            <p className="text-[10px] font-bold text-gray-300 uppercase mt-1">Drag file here</p>
           </div>
 
           <div className="relative flex items-center justify-center h-4">
-            <div className="absolute w-full border-t border-white/5"></div>
-            <span className="relative z-10 px-6 bg-[#050505]/80 backdrop-blur-sm text-[10px] font-black text-slate-500 uppercase tracking-widest">Input Stream</span>
+            <div className="absolute w-full border-t-2 border-gray-200"></div>
+            <span className="relative z-10 px-6 bg-gray-50 text-[10px] font-black text-gray-400 uppercase">Input Stream</span>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4">
-             <div className="flex-grow relative group">
+             <div className="flex-grow relative">
                 <input 
                   type="text" 
                   value={prompt} 
                   onChange={(e) => setPrompt(e.target.value)} 
                   placeholder={SAMPLE_PROMPTS[placeholderIndex]} 
-                  className="w-full h-14 px-6 bg-white/5 border border-white/10 focus:border-blue-400/50 focus:outline-none font-bold placeholder:text-slate-600 text-lg rounded-2xl text-white transition-all backdrop-blur-md"
+                  className="w-full h-14 px-5 bg-white border-4 border-black focus:outline-none font-bold placeholder:text-gray-200 text-lg"
                 />
-                <Sparkles className="absolute right-4 top-4 text-blue-400 group-hover:scale-110 transition-transform" size={24} />
+                <Sparkles className="absolute right-4 top-4 text-blue-400" size={24} />
              </div>
              <button 
                onClick={handleImageGenerate}
                disabled={status !== 'idle' || !prompt.trim()}
-               className="h-14 px-10 bg-white text-black font-black uppercase text-base hover:scale-[1.02] shadow-[0_4px_20px_rgba(255,255,255,0.1)] transition-all disabled:opacity-50 rounded-2xl flex items-center justify-center gap-2"
+               className="h-14 px-10 bg-black text-white border-4 border-black font-black uppercase text-base hover:translate-x-1 hover:translate-y-1 shadow-[6px_6px_0px_0px_rgba(37,99,235,1)] hover:shadow-none transition-all disabled:opacity-50"
              >
-               {status === 'generating_image' ? 'Syncing...' : 'Sync AI'}
+               {status === 'generating_image' ? 'Processing...' : 'Sync AI'}
              </button>
           </div>
         </div>
@@ -690,19 +685,19 @@ const App: React.FC = () => {
       {/* Viewer Wrapper */}
       <div className="space-y-6">
         {(imageData || status !== 'idle') && (
-           <div className="border border-white/10 relative aspect-square bg-white/5 shadow-2xl overflow-hidden rounded-[32px] ring-1 ring-white/10 backdrop-blur-sm">
+           <div className="border-4 border-black relative aspect-square bg-gray-50 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
              
              {/* Loading Overlay */}
              {status !== 'idle' && (
-               <div className="absolute inset-0 bg-[#0a0a0a]/90 z-20 flex flex-col items-center justify-center p-8 text-center space-y-8 backdrop-blur-md">
+               <div className="absolute inset-0 bg-white/95 z-20 flex flex-col items-center justify-center p-8 text-center space-y-8">
                   <div className="relative">
-                    <div className="w-20 h-20 border-4 border-white/10 border-t-indigo-500 animate-spin rounded-full"></div>
-                    <Box className="absolute inset-0 m-auto text-white animate-pulse" size={32} />
+                    <div className="w-20 h-20 border-8 border-gray-100 border-t-blue-600 animate-spin"></div>
+                    <Box className="absolute inset-0 m-auto text-black animate-pulse" size={32} />
                   </div>
                   <div className="space-y-3">
-                    <h3 className="text-2xl font-black uppercase tracking-tighter text-white">System {status.replace('_', ' ')}</h3>
+                    <h3 className="text-2xl font-black uppercase tracking-tighter">System {status.replace('_', ' ')}</h3>
                     {thinkingText && (
-                        <p className="text-indigo-400 font-mono text-sm uppercase italic">
+                        <p className="text-gray-400 font-mono text-sm uppercase">
                             <span className="inline-block animate-bounce mr-2">›</span>
                             {thinkingText}
                         </p>
@@ -712,13 +707,13 @@ const App: React.FC = () => {
              )}
 
              {errorMsg && (
-               <div className="absolute inset-0 bg-red-950/90 z-30 flex flex-col items-center justify-center p-8 text-center backdrop-blur-md">
-                  <div className="w-16 h-16 bg-red-500 text-white rounded-full flex items-center justify-center mb-6 border-2 border-white/20 shadow-2xl">
+               <div className="absolute inset-0 bg-red-50 z-30 flex flex-col items-center justify-center p-8 text-center">
+                  <div className="w-16 h-16 bg-red-500 text-white rounded-full flex items-center justify-center mb-6 border-4 border-black">
                     <HistoryIcon size={32} />
                   </div>
-                  <p className="text-red-400 font-black uppercase text-lg mb-2">Protocol Violation</p>
-                  <p className="text-slate-300 text-sm font-medium max-w-xs">{errorMsg}</p>
-                  <button onClick={() => setErrorMsg('')} className="mt-8 px-10 py-3 bg-white text-black text-xs font-black uppercase rounded-xl hover:scale-105 transition-transform">Dismiss Warning</button>
+                  <p className="text-red-600 font-black uppercase text-lg mb-2">Protocol Violation</p>
+                  <p className="text-gray-600 text-sm font-medium max-w-xs">{errorMsg}</p>
+                  <button onClick={() => setErrorMsg('')} className="mt-8 px-10 py-3 bg-black text-white text-xs font-black uppercase border-2 border-black hover:bg-gray-800 transition-colors">Dismiss Warning</button>
                </div>
              )}
 
@@ -734,18 +729,18 @@ const App: React.FC = () => {
 
         {/* Post-Generation Navigation */}
         {imageData && (
-           <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-6 duration-700">
+           <div className="flex flex-col gap-6 animate-in slide-in-from-bottom-6 duration-500">
               <div className="flex gap-4">
                  <button 
                    onClick={() => setViewMode('image')} 
-                   className={`flex-1 flex items-center justify-center gap-3 py-4 border border-white/10 font-black uppercase text-xs tracking-widest transition-all rounded-2xl backdrop-blur-md ${viewMode === 'image' ? 'bg-white text-black shadow-lg scale-[1.02]' : 'bg-white/5 text-white hover:bg-white/10'}`}
+                   className={`flex-1 flex items-center justify-center gap-3 py-4 border-4 border-black font-black uppercase text-sm transition-all ${viewMode === 'image' ? 'bg-black text-white' : 'bg-white hover:bg-gray-50'}`}
                  >
                    <ImageIcon size={20} /> Preview
                  </button>
                  <button 
                    onClick={() => setViewMode('voxel')} 
                    disabled={!voxelCode}
-                   className={`flex-1 flex items-center justify-center gap-3 py-4 border border-white/10 font-black uppercase text-xs tracking-widest transition-all rounded-2xl backdrop-blur-md ${viewMode === 'voxel' ? 'bg-white text-black shadow-lg scale-[1.02]' : 'bg-white/5 text-white hover:bg-white/10 disabled:opacity-20'}`}
+                   className={`flex-1 flex items-center justify-center gap-3 py-4 border-4 border-black font-black uppercase text-sm transition-all ${viewMode === 'voxel' ? 'bg-black text-white' : 'bg-white hover:bg-gray-50 disabled:opacity-30'}`}
                  >
                    <Layers size={20} /> Voxel Art
                  </button>
@@ -755,23 +750,23 @@ const App: React.FC = () => {
                 <button 
                   onClick={handleDirectVoxelize}
                   disabled={status !== 'idle'}
-                  className="w-full py-6 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white font-black uppercase text-2xl shadow-2xl hover:scale-[1.02] transition-all flex items-center justify-center gap-4 rounded-3xl group border border-white/20 active:scale-95"
+                  className="w-full py-6 bg-blue-600 text-white border-4 border-black font-black uppercase text-2xl shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all flex items-center justify-center gap-4"
                 >
-                  <Box size={32} className="group-hover:rotate-12 transition-transform" /> Construct 3D World
+                  <Box size={32} /> Construct 3D World
                 </button>
               ) : (
                 <div className="grid grid-cols-2 gap-6">
                    <button 
                      onClick={() => handleDownload(imageData, 'image')}
-                     className="py-5 bg-white/5 border border-white/10 text-white font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 hover:bg-white/10 transition-colors rounded-2xl backdrop-blur-md"
+                     className="py-5 border-4 border-black font-black uppercase text-xs flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors"
                    >
                      <Download size={18} /> Asset Jpeg
                    </button>
                    <button 
                      onClick={() => handleDownload(voxelCode, 'voxel')}
-                     className="py-5 bg-emerald-600 text-white font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-3 shadow-xl hover:scale-[1.02] transition-all rounded-2xl border border-white/20"
+                     className="py-5 bg-green-500 text-white border-4 border-black font-black uppercase text-xs flex items-center justify-center gap-3 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 active:translate-y-0 transition-transform"
                    >
-                     <Download size={18} /> Voxel Bundle
+                     <Download size={18} /> Voxel Bundle (HTML)
                    </button>
                 </div>
               )}
@@ -933,89 +928,89 @@ OUTPUT ONLY HTML. NO MARKDOWN. NO CHAT. NO EXPLANATIONS.`;
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-[#010308] text-slate-300 font-sans flex flex-col selection:bg-indigo-500/30 overflow-hidden"
+      className="fixed inset-0 z-50 bg-[#030305] text-slate-300 font-sans flex flex-col selection:bg-cyan-500/30 overflow-hidden"
     >
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-indigo-900/20 via-[#010308] to-[#010308] pointer-events-none z-0"></div>
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-cyan-900/20 via-[#030305] to-[#030305] pointer-events-none z-0"></div>
       
-      <header className="relative z-10 h-16 border-b border-white/5 bg-white/[0.02] backdrop-blur-2xl flex items-center justify-between px-6 shrink-0">
+      <header className="relative z-10 h-16 border-b border-white/5 bg-white/[0.02] backdrop-blur-md flex items-center justify-between px-6 shrink-0">
         <div className="flex items-center gap-4">
-          <button onClick={() => setView('home')} className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white group">
-            <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+          <button onClick={() => setView('home')} className="p-2 hover:bg-white/5 rounded-lg transition-colors text-white">
+            <ArrowLeft size={20} />
           </button>
           <div className="flex items-center gap-3">
-            <div className="relative flex items-center justify-center size-10 rounded-xl bg-gradient-to-b from-blue-500 to-indigo-600 shadow-[0_0_25px_rgba(67,56,202,0.4)]">
-              <Box className="text-white size-5 absolute animate-pulse" />
-              <div className="absolute inset-0 border border-white/30 rounded-xl"></div>
+            <div className="relative flex items-center justify-center size-10 rounded-xl bg-gradient-to-b from-cyan-400 to-blue-600 shadow-[0_0_20px_rgba(34,211,238,0.3)]">
+              <Box className="text-white size-5 absolute" />
+              <div className="absolute inset-0 border border-white/20 rounded-xl"></div>
             </div>
             <div>
               <h1 className="font-black text-xl tracking-tighter text-white uppercase flex items-center gap-2">
-                VOXEL<span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-emerald-400">NEXUS</span>
+                Voxel<span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Nexus</span>
               </h1>
-              <p className="text-[8px] font-mono text-indigo-400/60 tracking-[0.4em] uppercase">SYSTEM CORE SYNTHESIS v3.0</p>
+              <p className="text-[9px] font-mono text-cyan-500/70 tracking-[0.3em] uppercase">Procedural Synthesis Engine v3.0</p>
             </div>
           </div>
         </div>
         
         <div className="flex items-center gap-6">
-          <div className="hidden lg:flex items-center gap-4 text-[9px] font-mono text-slate-500 uppercase tracking-widest bg-black/60 px-5 py-2 rounded-full border border-white/5 shadow-inner">
-            <span className="flex items-center gap-2"><Cpu size={12} className="text-emerald-500"/> GPU: ACTIVE</span>
+          <div className="hidden lg:flex items-center gap-4 text-[10px] font-mono text-slate-500 uppercase tracking-widest bg-black/40 px-4 py-2 rounded-lg border border-white/5">
+            <span className="flex items-center gap-2"><Cpu size={12} className="text-cyan-500"/> WebGL 2.0 Active</span>
             <div className="w-px h-3 bg-white/10"></div>
-            <span className="flex items-center gap-2"><Activity size={12} className="text-purple-500"/> NEURAL: ENGAGED</span>
+            <span className="flex items-center gap-2"><Activity size={12} className="text-fuchsia-500"/> Llama 70B Core</span>
           </div>
         </div>
       </header>
 
       <main className="flex-1 flex overflow-hidden relative z-10">
-        <div className="w-full md:w-[420px] bg-white/[0.01] border-r border-white/5 flex flex-col shrink-0 relative backdrop-blur-md">
-          <div className="absolute top-0 right-0 w-px h-full bg-gradient-to-b from-transparent via-indigo-500/30 to-transparent"></div>
+        <div className="w-full md:w-[420px] bg-white/[0.01] border-r border-white/5 flex flex-col shrink-0 relative">
+          <div className="absolute top-0 right-0 w-px h-full bg-gradient-to-b from-transparent via-cyan-500/20 to-transparent"></div>
           
-          <div className="flex-1 overflow-y-auto p-8 flex flex-col gap-10 custom-scrollbar">
-            <form onSubmit={handleNexusGenerate} className="flex flex-col gap-6 flex-1">
+          <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-8 custom-scrollbar">
+            <form onSubmit={handleNexusGenerate} className="flex flex-col gap-5 flex-1">
               <div className="flex-1 flex flex-col">
-                <label className="flex items-center gap-2 text-[9px] font-black text-indigo-400/60 uppercase tracking-[0.3em] mb-4">
-                  <Layers size={12} className="text-purple-500"/> Synthesis Protocol
+                <label className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-3">
+                  <Layers size={12} className="text-fuchsia-500"/> Synthesis Parameters
                 </label>
                 <textarea 
                   value={nexusPrompt}
                   onChange={(e) => setNexusPrompt(e.target.value)}
                   placeholder="Enter semantic description...&#10;&#10;Examples:&#10;> Cyberpunk hover-car with neon trim&#10;> Blocky golden retriever puppy&#10;> Ancient stone golem with moss"
-                  className="w-full flex-1 min-h-[200px] p-5 bg-black/60 border border-white/10 rounded-2xl focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 focus:outline-none text-xs font-mono resize-none transition-all text-white placeholder:text-slate-700 leading-relaxed shadow-inner"
+                  className="w-full flex-1 min-h-[160px] p-4 bg-black/50 border border-white/10 rounded-xl focus:border-fuchsia-500/50 focus:ring-1 focus:ring-fuchsia-500/50 focus:outline-none text-sm font-mono resize-none transition-all text-fuchsia-100 placeholder:text-slate-700 leading-relaxed"
                 />
               </div>
 
               <button 
                 type="submit"
                 disabled={nexusIsLoading}
-                className={`group relative overflow-hidden flex items-center justify-center gap-3 w-full py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] transition-all shadow-2xl ${
+                className={`group relative overflow-hidden flex items-center justify-center gap-3 w-full py-4 rounded-xl font-bold uppercase tracking-widest text-[11px] transition-all ${
                   nexusIsLoading 
-                  ? 'bg-slate-900/50 text-slate-600 cursor-not-allowed border border-white/5 backdrop-blur-sm' 
-                  : 'bg-white text-black hover:scale-[1.02] hover:shadow-[0_0_40px_rgba(67,56,202,0.3)] active:scale-[0.98]'
+                  ? 'bg-slate-900 text-slate-500 cursor-not-allowed border border-white/5' 
+                  : 'bg-white text-black hover:bg-cyan-50 hover:shadow-[0_0_30px_rgba(34,211,238,0.3)] active:scale-[0.98]'
                 }`}
               >
                 {nexusIsLoading ? (
                   <>
-                    <Activity size={16} className="animate-pulse text-indigo-500" />
+                    <Activity size={16} className="animate-pulse" />
                     <span>Processing Matrix...</span>
                   </>
                 ) : (
                   <>
-                    <Zap size={16} className="text-indigo-600 transition-transform group-hover:scale-110" fill="currentColor"/>
-                    <span>Initiate Sync</span>
+                    <Zap size={16} className="text-cyan-500 group-hover:scale-110 transition-transform" fill="currentColor"/>
+                    <span>Initiate Render</span>
                   </>
                 )}
               </button>
             </form>
 
-            <div className="mt-auto space-y-4">
+            <div className="mt-auto space-y-3">
               {nexusError && (
-                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 font-mono text-[9px] uppercase tracking-wider leading-relaxed flex gap-3 items-start shadow-lg backdrop-blur-md">
-                  <span className="text-red-500 font-black">!</span> {nexusError}
+                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 font-mono text-[10px] uppercase leading-relaxed flex gap-2 items-start">
+                  <span className="text-red-500">!</span> {nexusError}
                 </div>
               )}
               
-              <div className="flex items-center justify-between p-4 bg-black/60 border border-white/5 rounded-xl backdrop-blur-md shadow-inner">
-                <span className="text-[8px] font-mono text-slate-500 uppercase tracking-[0.2em]">Matrix Status</span>
-                <span className={`text-[8px] font-mono uppercase tracking-[0.2em] font-black ${nexusIsLoading ? 'text-indigo-400 animate-pulse' : 'text-emerald-400/60'}`}>
+              <div className="flex items-center justify-between p-3 bg-black/40 border border-white/5 rounded-lg">
+                <span className="text-[9px] font-mono text-slate-500 uppercase tracking-widest">System Status</span>
+                <span className={`text-[9px] font-mono uppercase tracking-widest ${nexusIsLoading ? 'text-cyan-400 animate-pulse' : 'text-slate-400'}`}>
                   {nexusStatusText}
                 </span>
               </div>
@@ -1023,25 +1018,25 @@ OUTPUT ONLY HTML. NO MARKDOWN. NO CHAT. NO EXPLANATIONS.`;
           </div>
         </div>
 
-        <div className="flex-1 flex flex-col relative bg-white/[0.02] m-6 rounded-[40px] border border-white/10 overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.8)] ring-1 ring-white/5 backdrop-blur-sm">
-          <div className="absolute top-6 left-6 right-6 z-20 flex justify-between pointer-events-none">
-            <div className="flex gap-3 pointer-events-auto">
+        <div className="flex-1 flex flex-col relative bg-black/20 m-4 rounded-2xl border border-white/10 overflow-hidden shadow-2xl shadow-black">
+          <div className="absolute top-4 left-4 right-4 z-20 flex justify-between pointer-events-none">
+            <div className="flex gap-2 pointer-events-auto">
               <button 
                 onClick={() => setNexusViewMode('render')}
-                className={`flex items-center gap-2 px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-[0.2em] backdrop-blur-2xl transition-all border ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-mono uppercase tracking-widest backdrop-blur-md transition-all border ${
                   nexusViewMode === 'render' 
-                  ? 'bg-blue-600 text-white border-blue-400/50 shadow-[0_0_30px_rgba(37,99,235,0.4)] scale-105' 
-                  : 'bg-black/60 text-slate-400 border-white/10 hover:bg-white/10'
+                  ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50 shadow-[0_0_15px_rgba(34,211,238,0.2)]' 
+                  : 'bg-black/50 text-slate-400 border-white/10 hover:bg-white/10'
                 }`}
               >
                 <MonitorPlay size={14} /> Viewport
               </button>
               <button 
                 onClick={() => setNexusViewMode('code')}
-                className={`flex items-center gap-2 px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-[0.2em] backdrop-blur-2xl transition-all border ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-mono uppercase tracking-widest backdrop-blur-md transition-all border ${
                   nexusViewMode === 'code' 
-                  ? 'bg-indigo-600 text-white border-indigo-400/50 shadow-[0_0_30px_rgba(67,56,202,0.4)] scale-105' 
-                  : 'bg-black/60 text-slate-400 border-white/10 hover:bg-white/10'
+                  ? 'bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-500/50 shadow-[0_0_15px_rgba(217,70,239,0.2)]' 
+                  : 'bg-black/50 text-slate-400 border-white/10 hover:bg-white/10'
                 }`}
               >
                 <Code2 size={14} /> Source
@@ -1051,10 +1046,10 @@ OUTPUT ONLY HTML. NO MARKDOWN. NO CHAT. NO EXPLANATIONS.`;
             {nexusCode && (
               <button 
                 onClick={() => setNexusCode('')}
-                className="pointer-events-auto flex items-center justify-center size-10 rounded-full bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500 hover:text-white transition-all backdrop-blur-2xl shadow-xl"
+                className="pointer-events-auto flex items-center justify-center size-8 rounded-lg bg-black/50 border border-white/10 text-slate-400 hover:text-red-400 hover:border-red-500/50 transition-colors backdrop-blur-md"
                 title="Clear Scene"
               >
-                <Trash2 size={16} />
+                <Trash2 size={14} />
               </button>
             )}
           </div>
@@ -1101,8 +1096,7 @@ OUTPUT ONLY HTML. NO MARKDOWN. NO CHAT. NO EXPLANATIONS.`;
   );
 
   return (
-    <div className="min-h-screen text-slate-100 selection:bg-indigo-500/30 selection:text-white flex flex-col items-center px-4 overflow-x-hidden transition-colors bg-[#010308]">
-      {view !== 'nexus' && <VoxelBackground />}
+    <div className="min-h-screen bg-white selection:bg-blue-100 selection:text-blue-900 flex flex-col items-center px-4 overflow-x-hidden">
       <AnimatePresence mode="wait">
         {view === 'home' && renderHome()}
         {view === 'app' && renderApp()}
