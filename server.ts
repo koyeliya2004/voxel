@@ -84,7 +84,10 @@ async function startServer() {
 
   // API Route: Groq Proxy for Voxel Nexus
   app.post("/api/groq", async (req, res) => {
-    const apiKey = process.env.GROQ_API_KEY || "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";
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ error: "GROQ_API_KEY not configured. Please add it to your project secrets." });
+    }
     
     try {
       const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {

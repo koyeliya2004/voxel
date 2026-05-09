@@ -448,29 +448,73 @@ const App: React.FC = () => {
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
-            <div className="p-8 bg-black text-white border-2 border-black space-y-4 hover:shadow-[8px_8px_0px_0px_rgba(217,70,239,1)] transition-shadow">
-                <Zap className="text-cyan-400" size={32} />
+            <div className="p-8 bg-black text-white border-2 border-black space-y-4 hover:shadow-[8px_8px_0px_0px_rgba(217,70,239,1)] transition-all group">
+                <Zap className="text-cyan-400 group-hover:scale-110 transition-transform" size={32} />
                 <h3 className="font-black uppercase text-xl">Semantic Input</h3>
-                <p className="text-gray-400 text-sm leading-relaxed">Skip the image entirely. Describe your object in natural language and watch the matrix construct it from scratch.</p>
+                <p className="text-gray-400 text-sm leading-relaxed">Skip the image entirely. Describe your object in natural language and watch the matrix construct it from scratch using procedural logic.</p>
+                <ul className="text-[10px] font-mono text-cyan-500/60 uppercase space-y-1 pt-2">
+                  <li>• NLP to Geometry mapping</li>
+                  <li>• Instant logic derivation</li>
+                </ul>
             </div>
-            <div className="p-8 bg-white border-2 border-black space-y-4 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-shadow">
-                <Cpu className="text-fuchsia-600" size={32} />
+            <div className="p-8 bg-white border-2 border-black space-y-4 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all group">
+                <Cpu className="text-fuchsia-600 group-hover:rotate-12 transition-transform" size={32} />
                 <h3 className="font-black uppercase text-xl">Llama 70B Core</h3>
-                <p className="text-gray-600 text-sm leading-relaxed">Powered by Llama-3.3-70B via Groq LPUs for sub-second code generation of complex procedural geometries.</p>
+                <p className="text-gray-600 text-sm leading-relaxed">Powered by Llama-3.3-70B via Groq LPUs for sub-second code generation of complex Three.js procedural geometries.</p>
+                <ul className="text-[10px] font-mono text-fuchsia-500/60 uppercase space-y-1 pt-2">
+                  <li>• Inference in &lt;1.0s</li>
+                  <li>• High-density voxel grids</li>
+                </ul>
             </div>
-            <div className="p-8 bg-gray-50 border-2 border-black space-y-4 hover:shadow-[8px_8px_0px_0px_rgba(37,99,235,1)] transition-shadow">
-                <Code2 className="text-blue-600" size={32} />
+            <div className="p-8 bg-gray-50 border-2 border-black space-y-4 hover:shadow-[8px_8px_0px_0px_rgba(37,99,235,1)] transition-all group">
+                <Code2 className="text-blue-600 group-hover:-translate-y-1 transition-transform" size={32} />
                 <h3 className="font-black uppercase text-xl">Native WebGL</h3>
-                <p className="text-gray-600 text-sm leading-relaxed">Generates optimized Three.js boilerplate code that runs directly in any modern browser without heavy assets.</p>
+                <p className="text-gray-600 text-sm leading-relaxed">Generates optimized Three.js boilerplate code that runs directly in any modern browser without heavy assets or server-side rendering.</p>
+                <ul className="text-[10px] font-mono text-blue-500/60 uppercase space-y-1 pt-2">
+                  <li>• Pure client-side execution</li>
+                  <li>• OrbitControls interaction</li>
+                </ul>
             </div>
         </div>
 
-        <div className="bg-yellow-50 border-2 border-black p-6 flex items-start gap-4">
-            <Info className="shrink-0 text-yellow-600" />
-            <p className="text-sm font-medium text-yellow-900">
-                <span className="font-black uppercase mr-2 underline">Pro Tip:</span>
-                Voxel Nexus works best for structured entities like "Cyberpunk car", "Space Station", or "Medieval Castle". The more descriptive your prompt, the better the procedural algorithm becomes.
+        <div className="grid md:grid-cols-2 gap-8">
+          <div className="bg-slate-900 text-slate-100 p-8 border-2 border-black rounded-lg">
+            <h4 className="font-black uppercase text-lg mb-4 flex items-center gap-2">
+              <Plus size={20} className="text-cyan-400" />
+              How to operate
+            </h4>
+            <div className="space-y-4 text-sm font-medium">
+              <div className="flex gap-4">
+                <span className="shrink-0 size-6 bg-cyan-500 text-black flex items-center justify-center font-black rounded">1</span>
+                <p>Navigate to the <span className="text-cyan-400 underline">Nexus</span> tab from the header or home button.</p>
+              </div>
+              <div className="flex gap-4">
+                <span className="shrink-0 size-6 bg-cyan-500 text-black flex items-center justify-center font-black rounded">2</span>
+                <p>Enter a descriptive prompt like <code className="bg-black/50 px-1 py-0.5 rounded text-fuchsia-400">"Modern skyscraper with neon lights"</code>.</p>
+              </div>
+              <div className="flex gap-4">
+                <span className="shrink-0 size-6 bg-cyan-500 text-black flex items-center justify-center font-black rounded">3</span>
+                <p>Hit <span className="text-cyan-400">Initiate Render</span> and watch the AI generate the Three.js code and render the result.</p>
+              </div>
+              <div className="flex gap-4">
+                <span className="shrink-0 size-6 bg-cyan-500 text-black flex items-center justify-center font-black rounded">4</span>
+                <p>Switch between <span className="text-cyan-400 font-bold">Viewport</span> to see the 3D model and <span className="text-fuchsia-400 font-bold">Source</span> to inspect the code.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-yellow-50 border-2 border-black p-8 flex flex-col justify-center">
+            <div className="flex items-start gap-4 mb-4">
+              <Info className="shrink-0 text-yellow-600" />
+              <h4 className="font-black uppercase text-lg text-yellow-900">Optimization Matrix</h4>
+            </div>
+            <p className="text-sm font-medium text-yellow-900 leading-relaxed">
+                Voxel Nexus excels at structured geometries. For the best results, include keywords like <span className="underline decoration-yellow-400">"detailed"</span>, <span className="underline decoration-yellow-400">"symmetrical"</span>, or specific materials like <span className="underline decoration-yellow-400">"neon"</span>, <span className="underline decoration-yellow-400">"stone"</span>, or <span className="underline decoration-yellow-400">"gold"</span>.
             </p>
+            <div className="mt-6 p-4 bg-white/50 border border-yellow-200 rounded text-[11px] font-mono text-yellow-800">
+              STABLE DIFFUSION + LLAMA-3 SYNTHESIS ACTIVE
+            </div>
+          </div>
         </div>
       </section>
 
