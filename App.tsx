@@ -42,6 +42,12 @@ const EXAMPLES: Example[] = [
   { img: 'https://www.gstatic.com/aistudio/starter-apps/image_to_voxel/example3.png', html: 'examples/example3.html' },
 ];
 
+const resolvePublicUrl = (assetPath: string): string => {
+  const trimmedBase = import.meta.env.BASE_URL.replace(/\/$/, '');
+  const normalizedPath = assetPath.startsWith('/') ? assetPath : `/${assetPath}`;
+  return `${trimmedBase}${normalizedPath}`;
+};
+
 const App: React.FC = () => {
   const [prompt, setPrompt] = useState('');
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
@@ -248,7 +254,7 @@ const App: React.FC = () => {
       // 2. Fetch HTML
       let htmlText = '';
       try {
-        const htmlResponse = await fetch(example.html);
+        const htmlResponse = await fetch(resolvePublicUrl(example.html));
         if (htmlResponse.ok) {
             const rawText = await htmlResponse.text();
             
