@@ -77,6 +77,9 @@ async function startServer() {
     res.status(500).json({ error: "All image models failed", lastError });
   });
 
+  // Serve static examples folder
+  app.use('/examples', express.static(path.join(process.cwd(), 'examples')));
+
   // Health check
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok", openRouterConfigured: !!process.env.OPENROUTER_API_KEY });

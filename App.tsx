@@ -5,7 +5,7 @@
 
 
 import React, { useState, useRef, useEffect } from 'react';
-import { generateImage, IMAGE_SYSTEM_PROMPT } from './services/gemini';
+import { generateImage, IMAGE_SYSTEM_PROMPT } from './services/imageService';
 import { extractHtmlFromText, hideBodyText, zoomCamera } from './utils/html';
 
 type AppStatus = 'idle' | 'generating_image' | 'generating_voxels' | 'error';
@@ -37,16 +37,10 @@ interface Example {
 }
 
 const EXAMPLES: Example[] = [
-  { img: 'https://www.gstatic.com/aistudio/starter-apps/image_to_voxel/example1.png', html: 'examples/example1.html' },
-  { img: 'https://www.gstatic.com/aistudio/starter-apps/image_to_voxel/example2.png', html: 'examples/example2.html' },
-  { img: 'https://www.gstatic.com/aistudio/starter-apps/image_to_voxel/example3.png', html: 'examples/example3.html' },
+  { img: 'https://www.gstatic.com/aistudio/starter-apps/image_to_voxel/example1.png', html: '/examples/example1.html' },
+  { img: 'https://www.gstatic.com/aistudio/starter-apps/image_to_voxel/example2.png', html: '/examples/example2.html' },
+  { img: 'https://www.gstatic.com/aistudio/starter-apps/image_to_voxel/example3.png', html: '/examples/example3.html' },
 ];
-
-const resolvePublicUrl = (assetPath: string): string => {
-  const trimmedBase = import.meta.env.BASE_URL.replace(/\/$/, '');
-  const normalizedPath = assetPath.startsWith('/') ? assetPath : `/${assetPath}`;
-  return `${trimmedBase}${normalizedPath}`;
-};
 
 const App: React.FC = () => {
   const [prompt, setPrompt] = useState('');
@@ -126,7 +120,7 @@ const App: React.FC = () => {
     
     // Friendly handling for Rate Limits (429)
     if (message.includes('429') || message.toLowerCase().includes('quota') || message.toLowerCase().includes('rate limit')) {
-      message = "API Rate Limit Exceeded. The free tier has limits. Please wait 60 seconds and try again, or use a different Gemini API key.";
+      message = "API Rate Limit Exceeded. The free tier has limits. Please wait 60 seconds and try again, or check your API key settings.";
     }
     
     setErrorMsg(message);
@@ -254,7 +248,7 @@ const App: React.FC = () => {
       // 2. Fetch HTML
       let htmlText = '';
       try {
-        const htmlResponse = await fetch(resolvePublicUrl(example.html));
+        const htmlResponse = await fetch(example.html);
         if (htmlResponse.ok) {
             const rawText = await htmlResponse.text();
             
