@@ -1,20 +1,35 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+VOXEL: Procedural Synthesis Engine v3.0
+VOXEL is a high-performance text-to-voxel generation engine. It leverages large language models (LLMs) to procedurally synthesize 3D voxel models from natural language prompts, rendered in real-time via WebGL.
 
-# Run and deploy your AI Studio app
+🚀 Core Features
+LLM-Driven Synthesis: Powered by the Llama 70B Core to interpret complex prompts into structured 3D data.
 
-This contains everything you need to run your app locally.
+Real-Time Rendering: Utilizes a custom WebGL 2.0 pipeline for interactive, low-latency 3D viewports.
 
-View your app in AI Studio: https://ai.studio/apps/b84bced4-3d96-4cba-913e-d8b5482348af
+Dual-View Interface:
 
-## Run Locally
+Viewport: High-fidelity 3D visualization of the synthesized model.
 
-**Prerequisites:**  Node.js
+Source: Direct access to the generated procedural code or voxel data structure.
 
+Dynamic Parameters: Fine-tune "Synthesis Parameters" to adjust the density, scale, and complexity of the output.
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+🛠️ Technical Stack
+Core Logic: Procedural Synthesis Engine v3.0
+
+Inference: Llama 70B (Core Architecture)
+
+Graphics: WebGL 2.0
+
+Deployment: Optimized for Render-scale environments
+
+🎮 How to Use
+Input Prompt: Enter a descriptive phrase (e.g., "cute frog") in the Synthesis Parameters panel.
+
+Initiate Render: Click the Initiate Render button to begin the procedural generation process.
+
+Interact: Use the mouse to rotate, zoom, and inspect the model in the Viewport.
+
+Export/Edit: Toggle the Source view to inspect the underlying procedural logic.
+
+Note: This engine is designed for rapid prototyping of 3D assets and exploring the intersection of generative AI and voxel art.
