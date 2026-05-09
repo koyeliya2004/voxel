@@ -20,15 +20,6 @@ const App: React.FC = () => {
   const [viewMode, setViewMode] = useState<'render' | 'code'>('render');
   const [statusText, setStatusText] = useState('SYSTEM IDLE');
 
-  const getApiKey = () => {
-    if (typeof process !== 'undefined' && process.env && process.env.GROQ_API_KEY) {
-      return process.env.GROQ_API_KEY;
-    }
-    return 'YOUR_SECRET_KEY_HERE';
-  };
-
-  const GROQ_API_KEY = getApiKey();
-
   const extractHTML = (text: string) => {
     const match = text.match(/<html[\s\S]*?<\/html>/i);
     if (match) return match[0];
@@ -37,11 +28,6 @@ const App: React.FC = () => {
 
   const handleGenerate = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-
-    if (!GROQ_API_KEY || GROQ_API_KEY === 'YOUR_SECRET_KEY_HERE') {
-      setError('AUTHENTICATION REQUIRED: Secret GROQ_API_KEY is not configured.');
-      return;
-    }
 
     if (!prompt.trim()) {
       setError('PARAMETER MISSING: Describe the target entity.');
@@ -131,10 +117,9 @@ You must output a complete HTML file. Use the exact boilerplate below, and ONLY 
 OUTPUT ONLY HTML. NO MARKDOWN. NO CHAT. NO EXPLANATIONS.`;
 
     try {
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      const response = await fetch('/api/generate-voxel', {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${GROQ_API_KEY}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -149,8 +134,8 @@ OUTPUT ONLY HTML. NO MARKDOWN. NO CHAT. NO EXPLANATIONS.`;
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error?.message || 'API request failed');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || errorData.message || 'API request failed');
       }
 
       const result = await response.json();

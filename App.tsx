@@ -675,8 +675,10 @@ const App: React.FC = () => {
     </motion.div>
   );
 
+  const isNexusView = view === 'nexus';
+
   return (
-    <div className="min-h-screen bg-white selection:bg-blue-100 selection:text-blue-900 flex flex-col items-center px-4 overflow-x-hidden">
+    <div className={`min-h-screen bg-white selection:bg-blue-100 selection:text-blue-900 flex flex-col overflow-x-hidden ${isNexusView ? 'w-screen px-0 items-stretch' : 'items-center px-4'}`}>
       <AnimatePresence mode="wait">
         {view === 'home' && renderHome()}
         {view === 'app' && renderApp()}
