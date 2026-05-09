@@ -23,6 +23,7 @@ import {
   Globe,
   Cpu
 } from 'lucide-react';
+import VoxelBackground from './components/VoxelBackground';
 import { generateImage, IMAGE_SYSTEM_PROMPT } from './services/imageService';
 import { extractHtmlFromText, hideBodyText, zoomCamera } from './utils/html';
 
@@ -105,8 +106,16 @@ const App: React.FC = () => {
   }, []);
 
   const addToHistory = (image: string, voxel: string | null, promptStr: string) => {
+    // Fallback for crypto.randomUUID if not in secure context
+    const generateId = () => {
+        if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+            return crypto.randomUUID();
+        }
+        return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    };
+
     const newItem: HistoryItem = {
-        id: crypto.randomUUID(),
+        id: generateId(),
         timestamp: Date.now(),
         image,
         voxel,
@@ -336,30 +345,30 @@ const App: React.FC = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="max-w-4xl w-full space-y-12 py-12"
+      className="max-w-4xl w-full space-y-12 py-12 relative z-10"
     >
       <header className="text-center space-y-8">
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border-2 border-blue-600 rounded-full text-blue-600 font-black uppercase text-xs">
+        <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/10 border-2 border-blue-400 rounded-full text-blue-400 font-black uppercase text-xs backdrop-blur-sm">
           <Zap size={14} fill="currentColor" /> Web3D Voxel Suite
         </div>
-        <h1 className="text-6xl sm:text-8xl font-black tracking-tighter leading-[0.8] uppercase flex flex-col items-center">
+        <h1 className="text-6xl sm:text-8xl font-black tracking-tighter leading-[0.8] uppercase flex flex-col items-center text-white">
           <span>VOXEL</span>
-          <span className="text-blue-600">WORLD</span>
-          <span className="text-2xl mt-4 bg-black text-white px-6 py-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)]">ENGINE v1.0</span>
+          <span className="text-blue-500">WORLD</span>
+          <span className="text-2xl mt-4 bg-white text-black px-6 py-2 shadow-[4px_4px_0px_0px_rgba(255,255,255,0.2)]">ENGINE v1.0</span>
         </h1>
-        <p className="text-xl font-medium text-gray-600 max-w-xl mx-auto leading-relaxed">
+        <p className="text-xl font-medium text-gray-300 max-w-xl mx-auto leading-relaxed">
           The ultimate 3D voxelization platform. Transform your photos into living pixel-perfect dioramas instantly.
         </p>
         <div className="flex flex-wrap justify-center gap-6 pt-4">
           <button 
             onClick={() => setView('app')}
-            className="group px-10 py-5 bg-black text-white border-2 border-black font-black uppercase text-xl shadow-[10px_10px_0px_0px_rgba(37,99,235,1)] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all flex items-center gap-3"
+            className="group px-10 py-5 bg-white text-black border-2 border-white font-black uppercase text-xl shadow-[10px_10px_0px_0px_rgba(37,99,235,1)] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all flex items-center gap-3"
           >
             Start Creating <ChevronRight className="group-hover:translate-x-1 transition-transform" />
           </button>
           <button 
             onClick={() => setView('history')}
-            className="px-10 py-5 bg-white text-black border-2 border-black font-black uppercase text-xl shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all flex items-center gap-3"
+            className="px-10 py-5 bg-transparent text-white border-2 border-white font-black uppercase text-xl shadow-[10px_10px_0px_0px_rgba(255,255,255,0.3)] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all flex items-center gap-3"
           >
             History <HistoryIcon size={24} />
           </button>
@@ -372,105 +381,105 @@ const App: React.FC = () => {
         </div>
       </header>
 
-      <section className="grid md:grid-cols-2 gap-12 border-t-4 border-black pt-12">
-        <div className="space-y-8">
+      <section className="grid md:grid-cols-2 gap-12 border-t-4 border-white/20 pt-12">
+        <div className="space-y-8 text-white">
           <div className="space-y-2">
-            <h2 className="text-4xl font-black uppercase flex items-center gap-3">
-              <Info size={32} className="text-blue-600" />
+            <h2 className="text-4xl font-black uppercase flex items-center gap-3 text-white">
+              <Info size={32} className="text-blue-400" />
               How it works
             </h2>
             <p className="text-gray-400 font-bold uppercase text-xs tracking-widest">3-Step 3D Transformation</p>
           </div>
           <div className="space-y-8">
             <div className="flex gap-6 group">
-              <div className="w-12 h-12 shrink-0 bg-black text-white flex items-center justify-center font-black text-xl group-hover:bg-blue-600 transition-colors">1</div>
+              <div className="w-12 h-12 shrink-0 bg-white text-black flex items-center justify-center font-black text-xl group-hover:bg-blue-500 transition-colors">1</div>
               <div>
                 <h3 className="font-black uppercase text-xl">Input Your Vision</h3>
-                <p className="text-gray-600 leading-relaxed">Upload any image or use our AI prompt system to generate a brand new concept scene.</p>
+                <p className="text-gray-300 leading-relaxed">Upload any image or use our AI prompt system to generate a brand new concept scene.</p>
               </div>
             </div>
             <div className="flex gap-6 group">
-              <div className="w-12 h-12 shrink-0 bg-black text-white flex items-center justify-center font-black text-xl group-hover:bg-blue-600 transition-colors">2</div>
+              <div className="w-12 h-12 shrink-0 bg-white text-black flex items-center justify-center font-black text-xl group-hover:bg-blue-500 transition-colors">2</div>
               <div>
                 <h3 className="font-black uppercase text-xl">Pixel Extraction</h3>
-                <p className="text-gray-600 leading-relaxed">Our browser-based engine maps every pixel to a 3D coordinate, preserving colors with mathematical precision.</p>
+                <p className="text-gray-300 leading-relaxed">Our browser-based engine maps every pixel to a 3D coordinate, preserving colors with mathematical precision.</p>
               </div>
             </div>
             <div className="flex gap-6 group">
-              <div className="w-12 h-12 shrink-0 bg-black text-white flex items-center justify-center font-black text-xl group-hover:bg-blue-600 transition-colors">3</div>
+              <div className="w-12 h-12 shrink-0 bg-white text-black flex items-center justify-center font-black text-xl group-hover:bg-blue-500 transition-colors">3</div>
               <div>
                 <h3 className="font-black uppercase text-xl">3D Voxelization</h3>
-                <p className="text-gray-600 leading-relaxed">Thousands of geometric blocks are extruded into a real-time Three.js scene with water, clouds, and lighting.</p>
+                <p className="text-gray-300 leading-relaxed">Thousands of geometric blocks are extruded into a real-time Three.js scene with water, clouds, and lighting.</p>
               </div>
             </div>
           </div>
         </div>
         
         <div className="space-y-8">
-            <div className="bg-gray-100 border-4 border-black p-8 flex flex-col justify-center gap-6 shadow-[12px_12px_0px_0px_rgba(0,0,0,0.1)] relative overflow-hidden group">
-                <Globe className="absolute -right-8 -bottom-8 w-48 h-48 text-black opacity-5 group-hover:rotate-45 transition-transform duration-1000" />
+            <div className="bg-white/5 backdrop-blur-md border-4 border-white/20 p-8 flex flex-col justify-center gap-6 shadow-[12px_12px_0px_0px_rgba(255,255,255,0.05)] relative overflow-hidden group">
+                <Globe className="absolute -right-8 -bottom-8 w-48 h-48 text-white opacity-5 group-hover:rotate-45 transition-transform duration-1000" />
                 <div className="flex items-center gap-3 relative z-10">
-                    <div className="p-3 bg-blue-100 rounded-lg text-blue-600 font-black border-2 border-blue-200 text-sm">PRO TECH</div>
-                    <p className="font-black uppercase text-lg">Hardware Accelerated</p>
+                    <div className="p-3 bg-blue-500/20 rounded-lg text-blue-400 font-black border-2 border-blue-400/20 text-sm">PRO TECH</div>
+                    <p className="font-black uppercase text-lg text-white">Hardware Accelerated</p>
                 </div>
-                <p className="text-lg font-medium text-gray-700 leading-relaxed relative z-10">
+                <p className="text-lg font-medium text-gray-300 leading-relaxed relative z-10">
                     "Built on Three.js InstancedMesh for hyper-efficient rendering. Create complex dioramas without slowing down your browser."
                 </p>
                 <div className="flex gap-4 relative z-10">
-                    <div className="flex items-center gap-1 text-xs font-black text-blue-600 uppercase"><Cpu size={14} /> GPU Enabled</div>
-                    <div className="flex items-center gap-1 text-xs font-black text-green-600 uppercase"><Zap size={14} /> 0ms Latency</div>
+                    <div className="flex items-center gap-1 text-xs font-black text-blue-400 uppercase"><Cpu size={14} /> GPU Enabled</div>
+                    <div className="flex items-center gap-1 text-xs font-black text-green-400 uppercase"><Zap size={14} /> 0ms Latency</div>
                 </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-                <div className="p-6 border-2 border-black bg-white space-y-2">
-                    <p className="text-2xl font-black">100%</p>
+                <div className="p-6 border-2 border-white/20 bg-white/5 backdrop-blur-sm space-y-2">
+                    <p className="text-2xl font-black text-white">100%</p>
                     <p className="text-[10px] font-black uppercase text-gray-400">Private & Local</p>
                 </div>
-                <div className="p-6 border-2 border-black bg-white space-y-2">
-                    <p className="text-2xl font-black">∞</p>
+                <div className="p-6 border-2 border-white/20 bg-white/5 backdrop-blur-sm space-y-2">
+                    <p className="text-2xl font-black text-white">∞</p>
                     <p className="text-[10px] font-black uppercase text-gray-400">Exports</p>
                 </div>
             </div>
         </div>
       </section>
 
-      <section className="border-t-4 border-black pt-12 space-y-12">
+      <section className="border-t-4 border-white/20 pt-12 space-y-12">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div className="space-y-2">
-                <h2 className="text-4xl font-black uppercase flex items-center gap-3">
-                <Box size={32} className="text-fuchsia-600" />
+                <h2 className="text-4xl font-black uppercase flex items-center gap-3 text-white">
+                <Box size={32} className="text-fuchsia-400" />
                 Nexus Protocol
                 </h2>
                 <p className="text-gray-400 font-bold uppercase text-xs tracking-widest">Text-to-Code Neural Engine</p>
             </div>
-            <div className="px-4 py-2 bg-fuchsia-100 border-2 border-fuchsia-600 text-fuchsia-600 font-black uppercase text-[10px]">Experimental v3.0</div>
+            <div className="px-4 py-2 bg-fuchsia-500/10 border-2 border-fuchsia-400 text-fuchsia-400 font-black uppercase text-[10px]">Experimental v3.0</div>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
-            <div className="p-8 bg-black text-white border-2 border-black space-y-4 hover:shadow-[8px_8px_0px_0px_rgba(217,70,239,1)] transition-all group">
+            <div className="p-8 bg-black/40 backdrop-blur-md text-white border-2 border-white/20 space-y-4 hover:shadow-[8px_8px_0px_0px_rgba(217,70,239,0.5)] transition-all group">
                 <Zap className="text-cyan-400 group-hover:scale-110 transition-transform" size={32} />
                 <h3 className="font-black uppercase text-xl">Semantic Input</h3>
-                <p className="text-gray-400 text-sm leading-relaxed">Skip the image entirely. Describe your object in natural language and watch the matrix construct it from scratch using procedural logic.</p>
-                <ul className="text-[10px] font-mono text-cyan-500/60 uppercase space-y-1 pt-2">
+                <p className="text-gray-300 text-sm leading-relaxed">Skip the image entirely. Describe your object in natural language and watch the matrix construct it from scratch using procedural logic.</p>
+                <ul className="text-[10px] font-mono text-cyan-400/60 uppercase space-y-1 pt-2">
                   <li>• NLP to Geometry mapping</li>
                   <li>• Instant logic derivation</li>
                 </ul>
             </div>
-            <div className="p-8 bg-white border-2 border-black space-y-4 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all group">
-                <Cpu className="text-fuchsia-600 group-hover:rotate-12 transition-transform" size={32} />
-                <h3 className="font-black uppercase text-xl">Llama 70B Core</h3>
-                <p className="text-gray-600 text-sm leading-relaxed">Powered by Llama-3.3-70B via Groq LPUs for sub-second code generation of complex Three.js procedural geometries.</p>
-                <ul className="text-[10px] font-mono text-fuchsia-500/60 uppercase space-y-1 pt-2">
+            <div className="p-8 bg-white/5 backdrop-blur-sm border-2 border-white/20 space-y-4 hover:shadow-[8px_8px_0px_0px_rgba(255,255,255,0.1)] transition-all group">
+                <Cpu className="text-fuchsia-400 group-hover:rotate-12 transition-transform" size={32} />
+                <h3 className="font-black uppercase text-xl text-white">Llama 70B Core</h3>
+                <p className="text-gray-300 text-sm leading-relaxed">Powered by Llama-3.3-70B via Groq LPUs for sub-second code generation of complex Three.js procedural geometries.</p>
+                <ul className="text-[10px] font-mono text-fuchsia-400/60 uppercase space-y-1 pt-2">
                   <li>• Inference in &lt;1.0s</li>
                   <li>• High-density voxel grids</li>
                 </ul>
             </div>
-            <div className="p-8 bg-gray-50 border-2 border-black space-y-4 hover:shadow-[8px_8px_0px_0px_rgba(37,99,235,1)] transition-all group">
-                <Code2 className="text-blue-600 group-hover:-translate-y-1 transition-transform" size={32} />
-                <h3 className="font-black uppercase text-xl">Native WebGL</h3>
-                <p className="text-gray-600 text-sm leading-relaxed">Generates optimized Three.js boilerplate code that runs directly in any modern browser without heavy assets or server-side rendering.</p>
-                <ul className="text-[10px] font-mono text-blue-500/60 uppercase space-y-1 pt-2">
+            <div className="p-8 bg-black/20 backdrop-blur-sm border-2 border-white/20 space-y-4 hover:shadow-[8px_8px_0px_0px_rgba(37,99,235,0.5)] transition-all group">
+                <Code2 className="text-blue-400 group-hover:-translate-y-1 transition-transform" size={32} />
+                <h3 className="font-black uppercase text-xl text-white">Native WebGL</h3>
+                <p className="text-gray-300 text-sm leading-relaxed">Generates optimized Three.js boilerplate code that runs directly in any modern browser without heavy assets or server-side rendering.</p>
+                <ul className="text-[10px] font-mono text-blue-400/60 uppercase space-y-1 pt-2">
                   <li>• Pure client-side execution</li>
                   <li>• OrbitControls interaction</li>
                 </ul>
@@ -478,12 +487,12 @@ const App: React.FC = () => {
         </div>
 
         <div className="grid md:grid-cols-2 gap-8">
-          <div className="bg-slate-900 text-slate-100 p-8 border-2 border-black rounded-lg">
-            <h4 className="font-black uppercase text-lg mb-4 flex items-center gap-2">
+          <div className="bg-slate-900 border-2 border-white/10 p-8 rounded-lg">
+            <h4 className="font-black uppercase text-lg mb-4 flex items-center gap-2 text-white">
               <Plus size={20} className="text-cyan-400" />
               How to operate
             </h4>
-            <div className="space-y-4 text-sm font-medium">
+            <div className="space-y-4 text-sm font-medium text-slate-300">
               <div className="flex gap-4">
                 <span className="shrink-0 size-6 bg-cyan-500 text-black flex items-center justify-center font-black rounded">1</span>
                 <p>Navigate to the <span className="text-cyan-400 underline">Nexus</span> tab from the header or home button.</p>
@@ -503,23 +512,23 @@ const App: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-yellow-50 border-2 border-black p-8 flex flex-col justify-center">
+          <div className="bg-yellow-500/10 backdrop-blur-sm border-2 border-yellow-500/20 p-8 flex flex-col justify-center">
             <div className="flex items-start gap-4 mb-4">
-              <Info className="shrink-0 text-yellow-600" />
-              <h4 className="font-black uppercase text-lg text-yellow-900">Optimization Matrix</h4>
+              <Info className="shrink-0 text-yellow-400" />
+              <h4 className="font-black uppercase text-lg text-yellow-100">Optimization Matrix</h4>
             </div>
-            <p className="text-sm font-medium text-yellow-900 leading-relaxed">
+            <p className="text-sm font-medium text-yellow-200/80 leading-relaxed">
                 Voxel Nexus excels at structured geometries. For the best results, include keywords like <span className="underline decoration-yellow-400">"detailed"</span>, <span className="underline decoration-yellow-400">"symmetrical"</span>, or specific materials like <span className="underline decoration-yellow-400">"neon"</span>, <span className="underline decoration-yellow-400">"stone"</span>, or <span className="underline decoration-yellow-400">"gold"</span>.
             </p>
-            <div className="mt-6 p-4 bg-white/50 border border-yellow-200 rounded text-[11px] font-mono text-yellow-800">
+            <div className="mt-6 p-4 bg-black/40 border border-yellow-500/20 rounded text-[11px] font-mono text-yellow-400/60">
               STABLE DIFFUSION + LLAMA-3 SYNTHESIS ACTIVE
             </div>
           </div>
         </div>
       </section>
 
-      <footer className="text-center pt-12 border-t-2 border-black border-dashed">
-        <p className="text-xs font-black uppercase tracking-[0.2em] text-gray-400">Copyright © 2024 VoxelWorld Engine • All creators welcome</p>
+      <footer className="text-center pt-12 border-t-2 border-white/10 border-dashed">
+        <p className="text-xs font-black uppercase tracking-[0.2em] text-gray-500">Copyright © 2024 VoxelWorld Engine • All creators welcome</p>
       </footer>
     </motion.div>
   );
@@ -1096,7 +1105,8 @@ OUTPUT ONLY HTML. NO MARKDOWN. NO CHAT. NO EXPLANATIONS.`;
   );
 
   return (
-    <div className="min-h-screen bg-white selection:bg-blue-100 selection:text-blue-900 flex flex-col items-center px-4 overflow-x-hidden">
+    <div className={`min-h-screen selection:bg-blue-100 selection:text-blue-900 flex flex-col items-center px-4 overflow-x-hidden transition-colors duration-500 ${view === 'home' ? 'bg-[#01040a]' : 'bg-white text-black'}`}>
+      {view === 'home' && <VoxelBackground />}
       <AnimatePresence mode="wait">
         {view === 'home' && renderHome()}
         {view === 'app' && renderApp()}
