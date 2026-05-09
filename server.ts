@@ -77,44 +77,33 @@ async function startServer() {
     res.status(500).json({ error: "All image models failed", lastError });
   });
 
+  // Health check
+  app.get("/api/health", (req, res) => {
+    res.json({ status: "ok", openRouterConfigured: !!process.env.OPENROUTER_API_KEY, groqConfigured: !!process.env.GROQ_API_KEY });
+  });
 
-
-  // API Route: Groq Proxy for Voxel HTML Generation
-  app.post("/api/generate-voxel", async (req, res) => {
-    const apiKey = process.env.GROQ_API_KEY;
-    if (!apiKey) {
-      return res.status(500).json({ error: "GROQ_API_KEY not configured in settings. Please check your project secrets." });
-    }
-
+  // API Route: Groq Proxy for Voxel Nexus
+  app.post("/api/groq", async (req, res) => {
+    const apiKey = process.env.GROQ_API_KEY || "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";
+    
     try {
-      const payload = req.body;
       const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${apiKey}`,
           "Content-Type": "application/json"
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(req.body)
       });
 
-      const contentType = response.headers.get("content-type") || "";
-      const isJson = contentType.includes("application/json");
-      const data = isJson ? await response.json() : { error: await response.text() };
-
+      const data = await response.json();
       if (!response.ok) {
-        const errorMessage = (data as any)?.error?.message || (data as any)?.error || "Groq request failed";
-        return res.status(response.status).json({ error: errorMessage });
+        return res.status(response.status).json(data);
       }
-
-      return res.json(data);
+      res.json(data);
     } catch (err: any) {
-      console.error("Error in /api/generate-voxel:", err.message);
-      return res.status(500).json({ error: err.message || "Unexpected server error" });
+      res.status(500).json({ error: err.message });
     }
-  });
-  // Health check
-  app.get("/api/health", (req, res) => {
-    res.json({ status: "ok", openRouterConfigured: !!process.env.OPENROUTER_API_KEY });
   });
 
   // Vite server integration
