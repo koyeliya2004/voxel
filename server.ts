@@ -96,12 +96,26 @@ async function startServer() {
         body: JSON.stringify(req.body)
       });
 
-      const data = await response.json();
+      const contentType = response.headers.get("content-type");
+      const isJson = contentType && contentType.includes("application/json");
+
       if (!response.ok) {
-        return res.status(response.status).json(data);
+        const errorData = isJson ? await response.json() : await response.text();
+        return res.status(response.status).json({ 
+          error: isJson ? (errorData.error?.message || "Groq API Error") : "Groq API returned non-JSON error",
+          details: !isJson ? errorData : undefined
+        });
       }
-      res.json(data);
+
+      if (isJson) {
+        const data = await response.json();
+        res.json(data);
+      } else {
+        const text = await response.text();
+        res.status(500).json({ error: "Upstream returned non-JSON response", details: String(text).substring(0, 200) });
+      }
     } catch (err: any) {
+      console.error("Groq Proxy Error:", err);
       res.status(500).json({ error: err.message });
     }
   });
@@ -122,7 +136,10 @@ async function startServer() {
   }
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`>>> VOXELWORLD ENGINE SERVER STARTING...`);
+    console.log(`>>> MODE: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`>>> PORT: ${PORT}`);
+    console.log(`>>> GROQ CONFIGURED: ${!!process.env.GROQ_API_KEY}`);
   });
 }
 

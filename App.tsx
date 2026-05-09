@@ -839,9 +839,17 @@ OUTPUT ONLY HTML. NO MARKDOWN. NO CHAT. NO EXPLANATIONS.`;
         })
       });
 
+      const contentType = response.headers.get("content-type");
+      const isJson = contentType && contentType.includes("application/json");
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error?.message || "API request failed");
+        const errorData = isJson ? await response.json() : await response.text();
+        const msg = isJson ? (errorData.error || "Generation failed") : "Server returned HTML/Text instead of JSON. Ensure the backend is running properly.";
+        throw new Error(typeof msg === 'string' ? msg : JSON.stringify(msg));
+      }
+
+      if (!isJson) {
+        throw new Error("Unexpected response format (expected JSON from proxy).");
       }
 
       const result = await response.json();
