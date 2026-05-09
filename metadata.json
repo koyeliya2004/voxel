@@ -1,6 +1,6 @@
 {
   "name": "VoxelWorld Engine",
-  "description": "A high-performance 3D suite featuring pixel-to-voxel mapping and Voxel Nexus — a text-to-code procedural synthesis engine powered by Llama 70B.",
+  "description": "A high-performance 3D suite featuring pixel-to-voxel mapping and Voxel Nexus — a text-to-code procedural synthesis engine.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }
