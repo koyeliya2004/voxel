@@ -62,8 +62,13 @@ const SAMPLE_PROMPTS = [
 const App: React.FC = () => {
   const [view, setView] = useState<View>('home');
   const [history, setHistory] = useState<HistoryItem[]>(() => {
-    const saved = localStorage.getItem('voxel_history');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem('voxel_history');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      console.error('Failed to load history:', e);
+      return [];
+    }
   });
 
   const [prompt, setPrompt] = useState('');
@@ -94,7 +99,25 @@ const App: React.FC = () => {
 
   // Persistence for history
   useEffect(() => {
-    localStorage.setItem('voxel_history', JSON.stringify(history));
+    const saveToStorage = (items: HistoryItem[]) => {
+      try {
+        const data = JSON.stringify(items);
+        localStorage.setItem('voxel_history', data);
+      } catch (e) {
+        console.warn('STORAGE ERROR [Quota or Permission]:', e);
+        if (items.length > 1) {
+          // Drastically reduce to find a size that fits
+          const reduced = items.slice(0, Math.floor(items.length / 2));
+          saveToStorage(reduced);
+        } else {
+          console.error('CRITICAL: Storage unreachable even for single entry');
+          localStorage.removeItem('voxel_history');
+        }
+      }
+    };
+    
+    // Safety Limit: History items can be massive. 5 is plenty for persistent session.
+    saveToStorage(history.slice(0, 5));
   }, [history]);
 
   // Rotate placeholders
@@ -131,12 +154,23 @@ const App: React.FC = () => {
 
   const handleError = (err: any) => {
     setStatus('error');
-    let message = err.message || 'An unexpected error occurred.';
+    console.error("VOXEL ENGINE ERROR:", err);
+    
+    let message = 'An unexpected engine failure occurred.';
+    if (!err) {
+        message = 'Null signal received.';
+    } else if (typeof err === 'string') {
+        message = err;
+    } else if (err instanceof Error) {
+        message = err.message;
+    } else if (typeof err === 'object') {
+        message = err.message || err.error || JSON.stringify(err);
+    }
+    
     if (message.includes('429') || message.toLowerCase().includes('quota') || message.toLowerCase().includes('rate limit')) {
-      message = "API Rate Limit Exceeded. The free tier has limits. Please wait 60 seconds and try again, or check your API key settings.";
+      message = "PROTOCOL SHARDING: API Limit Reached. Reconnect in 60 seconds.";
     }
     setErrorMsg(message);
-    console.error(err);
   };
 
   const handleImageGenerate = async () => {
@@ -906,16 +940,30 @@ OUTPUT ONLY HTML. NO MARKDOWN. NO CHAT. NO EXPLANATIONS.`;
       }
 
       const result = await response.json();
+      
+      if (!result.choices || result.choices.length === 0 || !result.choices[0].message) {
+        throw new Error("Invalid response structure from completion API (missing choices).");
+      }
+
       const rawContent = result.choices[0].message.content;
+      
+      if (!rawContent) {
+        throw new Error("AI returned empty content. Try a different prompt.");
+      }
       
       // Robust HTML extraction
       const extractHTML = (text: string) => {
+        if (!text) return '';
         const match = text.match(/<html[\s\S]*?<\/html>/i);
         if (match) return match[0];
         return text.replace(/```(html)?/gi, '').replace(/```/g, '').trim();
       };
 
       const extractedHTML = extractHTML(rawContent);
+      
+      if (!extractedHTML || extractedHTML.length < 50) {
+        throw new Error("Failed to extract valid HTML diorama from AI response.");
+      }
       
       setNexusCode(extractedHTML);
       setNexusStatusText('RENDER SEQUENCE COMPLETE');

@@ -36,8 +36,9 @@ export const generateImage = async (prompt: string, aspectRatio: string = '1:1',
         });
 
         if (!response.ok) {
-            const err = await response.json();
-            throw new Error(err?.error?.message || "Image Generation Failed via Server Proxy");
+            const err = await response.json().catch(() => ({}));
+            const msg = err.error || err.message || "Image Generation Failed via Server Proxy";
+            throw new Error(typeof msg === 'string' ? msg : JSON.stringify(msg));
         }
 
         const data = await response.json();
